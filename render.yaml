@@ -14,7 +14,6 @@ services:
     name: lunarview-server
     runtime: node
     region: singapore
-    plan: free
     buildCommand: cd apps/server && npm install && npm run build
     startCommand: cd apps/server && npm start
     envVars:
@@ -37,7 +36,6 @@ services:
   - type: web
     name: lunarview-website
     runtime: static
-    plan: free
     buildCommand: echo "Static site - no build needed"
     staticPublishPath: apps/website
     headers:
