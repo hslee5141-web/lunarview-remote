@@ -117,7 +117,7 @@ export async function confirmPayment(
 
         // 구독 생성
         const subscriptionId = uuidv4();
-        subscriptionQueries.create({
+        await subscriptionQueries.create({
             id: subscriptionId,
             user_id: userId,
             plan,
@@ -127,7 +127,7 @@ export async function confirmPayment(
         });
 
         // 사용자 플랜 업데이트
-        userQueries.updatePlan(userId, plan);
+        await userQueries.updatePlan(userId, plan);
 
         return {
             success: true,
@@ -147,8 +147,8 @@ export async function confirmPayment(
 /**
  * 현재 구독 조회
  */
-export function getSubscription(userId: string): Subscription | null {
-    return subscriptionQueries.findByUserId(userId) as Subscription | null;
+export async function getSubscription(userId: string): Promise<Subscription | null> {
+    return await subscriptionQueries.findByUserId(userId) as Subscription | null;
 }
 
 /**
@@ -160,7 +160,7 @@ export async function cancelSubscription(userId: string): Promise<{
     error?: string;
 }> {
     try {
-        const subscription = subscriptionQueries.findByUserId(userId) as Subscription | undefined;
+        const subscription = await subscriptionQueries.findByUserId(userId) as Subscription | undefined;
 
         if (!subscription) {
             return { success: false, error: '활성 구독이 없습니다.' };
@@ -171,7 +171,7 @@ export async function cancelSubscription(userId: string): Promise<{
         }
 
         // 구독 상태 업데이트
-        subscriptionQueries.cancel(subscription.id);
+        await subscriptionQueries.cancel(subscription.id);
 
         // 현재 결제 기간이 끝나면 무료로 다운그레이드됨
         // (스케줄러에서 처리)
@@ -189,8 +189,8 @@ export async function cancelSubscription(userId: string): Promise<{
 /**
  * 무료 플랜으로 변경
  */
-export function downgradeToFree(userId: string): void {
-    userQueries.updatePlan(userId, 'free');
+export async function downgradeToFree(userId: string): Promise<void> {
+    await userQueries.updatePlan(userId, 'free');
 }
 
 export default {

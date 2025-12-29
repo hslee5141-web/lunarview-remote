@@ -10,7 +10,7 @@ const LOCAL_SERVER_URL = 'localhost:8080';
 
 // 나중에 Render 배포 URL로 교체할 곳
 // 예: 'lunarview-server.onrender.com'
-const PROD_SERVER_URL = 'lunarview-server-xxxx.onrender.com';
+const PROD_SERVER_URL = 'lunarview-server.onrender.com';
 
 const SERVER_HOST = isDev ? LOCAL_SERVER_URL : PROD_SERVER_URL;
 

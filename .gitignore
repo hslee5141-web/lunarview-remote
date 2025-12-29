@@ -39,6 +39,7 @@ coverage/
 # Electron
 apps/desktop/out/
 apps/desktop/release/
+apps/desktop/release-packager/
 
 # Temporary files
 tmp/

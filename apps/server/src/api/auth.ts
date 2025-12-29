@@ -159,9 +159,9 @@ router.post('/refresh', async (req: Request, res: Response) => {
  * GET /api/auth/me
  * 현재 사용자 정보 조회
  */
-router.get('/me', authMiddleware, (req: Request, res: Response) => {
+router.get('/me', authMiddleware, async (req: Request, res: Response) => {
     try {
-        const user = getUserById(req.user!.userId);
+        const user = await getUserById(req.user!.userId);
 
         if (!user) {
             res.status(404).json({ success: false, error: '사용자를 찾을 수 없습니다.' });

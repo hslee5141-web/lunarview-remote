@@ -70,7 +70,7 @@ export async function register(email: string, password: string, name: string): P
 }> {
     try {
         // 이메일 중복 확인
-        const existingUser = userQueries.findByEmail(email) as User | undefined;
+        const existingUser = await userQueries.findByEmail(email) as User | undefined;
         if (existingUser) {
             return { success: false, error: '이미 사용 중인 이메일입니다.' };
         }
@@ -80,15 +80,10 @@ export async function register(email: string, password: string, name: string): P
 
         // 사용자 생성
         const userId = uuidv4();
-        const db = getDatabase();
-
-        db.prepare(`
-            INSERT INTO users (id, email, password_hash, name, plan)
-            VALUES (?, ?, ?, ?, 'free')
-        `).run(userId, email, passwordHash, name);
+        await userQueries.create(userId, email, passwordHash, name);
 
         // 생성된 사용자 조회
-        const user = userQueries.findById(userId) as User;
+        const user = await userQueries.findById(userId) as User;
 
         // 토큰 생성
         const accessToken = generateAccessToken(user);
@@ -97,7 +92,7 @@ export async function register(email: string, password: string, name: string): P
         // 리프레시 토큰 저장
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRES_DAYS);
-        tokenQueries.create(userId, refreshToken, expiresAt.toISOString());
+        await tokenQueries.create(userId, refreshToken, expiresAt.toISOString());
 
         // 비밀번호 해시 제외하고 반환
         const { password_hash, ...userWithoutPassword } = user;
@@ -126,7 +121,7 @@ export async function login(email: string, password: string): Promise<{
 }> {
     try {
         // 사용자 조회
-        const user = userQueries.findByEmail(email) as User | undefined;
+        const user = await userQueries.findByEmail(email) as User | undefined;
         if (!user) {
             return { success: false, error: '이메일 또는 비밀번호가 올바르지 않습니다.' };
         }
@@ -144,7 +139,7 @@ export async function login(email: string, password: string): Promise<{
         // 리프레시 토큰 저장
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRES_DAYS);
-        tokenQueries.create(user.id, refreshToken, expiresAt.toISOString());
+        await tokenQueries.create(user.id, refreshToken, expiresAt.toISOString());
 
         // 비밀번호 해시 제외하고 반환
         const { password_hash, ...userWithoutPassword } = user;
@@ -172,19 +167,19 @@ export async function refreshTokens(refreshToken: string): Promise<{
 }> {
     try {
         // 리프레시 토큰 조회
-        const tokenRecord = tokenQueries.findByToken(refreshToken) as any;
+        const tokenRecord = await tokenQueries.findByToken(refreshToken) as any;
         if (!tokenRecord) {
             return { success: false, error: '유효하지 않은 토큰입니다.' };
         }
 
         // 사용자 조회
-        const user = userQueries.findById(tokenRecord.user_id) as User | undefined;
+        const user = await userQueries.findById(tokenRecord.user_id) as User | undefined;
         if (!user) {
             return { success: false, error: '사용자를 찾을 수 없습니다.' };
         }
 
         // 기존 토큰 삭제
-        tokenQueries.deleteByToken(refreshToken);
+        await tokenQueries.deleteByToken(refreshToken);
 
         // 새 토큰 생성
         const newAccessToken = generateAccessToken(user);
@@ -193,7 +188,7 @@ export async function refreshTokens(refreshToken: string): Promise<{
         // 새 리프레시 토큰 저장
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRES_DAYS);
-        tokenQueries.create(user.id, newRefreshToken, expiresAt.toISOString());
+        await tokenQueries.create(user.id, newRefreshToken, expiresAt.toISOString());
 
         return {
             success: true,
@@ -209,9 +204,9 @@ export async function refreshTokens(refreshToken: string): Promise<{
 /**
  * 로그아웃
  */
-export function logout(refreshToken: string): void {
+export async function logout(refreshToken: string): Promise<void> {
     try {
-        tokenQueries.deleteByToken(refreshToken);
+        await tokenQueries.deleteByToken(refreshToken);
     } catch (error) {
         console.error('Logout error:', error);
     }
@@ -220,8 +215,8 @@ export function logout(refreshToken: string): void {
 /**
  * 사용자 ID로 조회
  */
-export function getUserById(userId: string): Omit<User, 'password_hash'> | null {
-    const user = userQueries.findById(userId) as User | undefined;
+export async function getUserById(userId: string): Promise<Omit<User, 'password_hash'> | null> {
+    const user = await userQueries.findById(userId) as User | undefined;
     if (!user) return null;
 
     const { password_hash, ...userWithoutPassword } = user;

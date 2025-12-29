@@ -20,9 +20,9 @@ const router = Router();
  * GET /api/subscription
  * 현재 구독 상태 조회
  */
-router.get('/', authMiddleware, (req: Request, res: Response) => {
+router.get('/', authMiddleware, async (req: Request, res: Response) => {
     try {
-        const subscription = getSubscription(req.user!.userId);
+        const subscription = await getSubscription(req.user!.userId);
 
         res.json({
             success: true,
