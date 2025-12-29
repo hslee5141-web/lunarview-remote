@@ -11,6 +11,6 @@
   </defs>
   <!-- Rounded background -->
   <rect x="0" y="0" width="32" height="32" rx="8" fill="url(#bgGrad)"/>
-  <!-- Crescent moon -->
-  <path d="M22 16a8 8 0 1 1-8-8 6 6 0 0 0 8 8z" fill="url(#moonGrad)"/>
+  <!-- Thin crescent moon (facing right, matching Coming Soon) -->
+  <path d="M20 6a10 10 0 1 0 0 20 7.5 7.5 0 0 1 0-20z" fill="url(#moonGrad)" transform="rotate(-25 16 16)"/>
 </svg>
