@@ -37,7 +37,6 @@ services:
   - type: web
     name: lunarview-website
     runtime: static
-    region: singapore
     plan: free
     buildCommand: echo "Static site - no build needed"
     staticPublishPath: apps/website
