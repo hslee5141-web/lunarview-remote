@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>페이지를 찾을 수 없습니다 - LunarView</title>
+    <meta name="robots" content="noindex">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .error-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .error-content {
+            max-width: 500px;
+        }
+
+        .error-code {
+            font-size: 120px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 16px;
+        }
+
+        .error-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .error-description {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        .error-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .error-illustration {
+            margin-bottom: 32px;
+        }
+
+        .error-illustration svg {
+            width: 200px;
+            height: 200px;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 480px) {
+            .error-code {
+                font-size: 80px;
+            }
+
+            .error-title {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">
+                <svg class="logo-icon" viewBox="0 0 24 24" width="32" height="32">
+                    <rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.5"
+                        fill="none" />
+                    <line x1="8" y1="21" x2="16" y2="21" stroke="currentColor" stroke-width="1.5" />
+                    <line x1="12" y1="17" x2="12" y2="21" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M16.5 10A4.5 4.5 0 1 1 9.5 5.5 3.5 3.5 0 0 0 16.5 10z" fill="currentColor" opacity="0.9" />
+                </svg>
+                <span>LunarView</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="error-page">
+        <div class="error-content">
+            <div class="error-illustration">
+                <svg viewBox="0 0 200 200" fill="none">
+                    <circle cx="100" cy="100" r="80" stroke="url(#grad404)" stroke-width="4" stroke-dasharray="8 8"
+                        opacity="0.3" />
+                    <circle cx="100" cy="100" r="60" stroke="url(#grad404)" stroke-width="2" opacity="0.5" />
+                    <path d="M70 80 L100 110 L130 80" stroke="url(#grad404)" stroke-width="4" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <path d="M70 100 L100 130 L130 100" stroke="url(#grad404)" stroke-width="4" stroke-linecap="round"
+                        stroke-linejoin="round" opacity="0.5" />
+                    <circle cx="100" cy="60" r="8" fill="url(#grad404)" />
+                    <defs>
+                        <linearGradient id="grad404" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#8B5CF6" />
+                            <stop offset="100%" stop-color="#06B6D4" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <div class="error-code">404</div>
+            <h1 class="error-title">페이지를 찾을 수 없습니다</h1>
+            <p class="error-description">
+                요청하신 페이지가 존재하지 않거나 이동되었습니다.<br>
+                URL을 확인하시거나 홈페이지로 돌아가세요.
+            </p>
+            <div class="error-actions">
+                <a href="/" class="btn btn-primary">홈으로 돌아가기</a>
+                <a href="/contact.html" class="btn btn-secondary">문의하기</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+
+</html>

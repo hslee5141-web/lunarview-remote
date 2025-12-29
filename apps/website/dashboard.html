@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>대시보드 - LunarView</title>
+    <meta name="description" content="LunarView 대시보드 - 계정 정보, 구독 상태, 연결 기록을 확인하세요.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="legal.css">
+    <style>
+        .dashboard-container {
+            min-height: 100vh;
+            padding-top: 80px;
+        }
+
+        .dashboard-header {
+            padding: 60px 0 40px;
+            background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        }
+
+        .dashboard-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .dashboard-subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .dashboard-content {
+            padding: 40px 0 80px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .dashboard-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-xl);
+            padding: 24px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-icon svg {
+            stroke: white;
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .card-description {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .plan-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-full);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-primary);
+        }
+
+        .plan-badge.pro {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(6, 182, 212, 0.2));
+        }
+
+        .profile-section {
+            grid-column: span 2;
+        }
+
+        .profile-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .profile-item {
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-lg);
+        }
+
+        .profile-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .profile-value {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .action-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding: 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-xl);
+            text-decoration: none;
+            transition: var(--transition-fast);
+        }
+
+        .action-card:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+        }
+
+        .action-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-icon svg {
+            stroke: var(--accent-primary);
+        }
+
+        .action-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .recent-activity {
+            background: var(--bg-card);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-xl);
+            padding: 24px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-lg);
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .activity-time {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .profile-section {
+                grid-column: span 2;
+            }
+
+            .quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .profile-section {
+                grid-column: span 1;
+            }
+
+            .profile-info {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">
+                <svg class="logo-icon" viewBox="0 0 24 24" width="32" height="32">
+                    <rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.5"
+                        fill="none" />
+                    <line x1="8" y1="21" x2="16" y2="21" stroke="currentColor" stroke-width="1.5" />
+                    <line x1="12" y1="17" x2="12" y2="21" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M16.5 10A4.5 4.5 0 1 1 9.5 5.5 3.5 3.5 0 0 0 16.5 10z" fill="currentColor" opacity="0.9" />
+                </svg>
+                <span>LunarView</span>
+            </a>
+            <div class="nav-actions">
+                <!-- 비로그인 상태 -->
+                <div id="nav-guest" class="nav-auth-state">
+                    <a href="/login.html" class="btn btn-ghost">로그인</a>
+                </div>
+                <!-- 로그인 상태 -->
+                <div id="nav-user" class="nav-auth-state" style="display: none;">
+                    <div class="user-dropdown">
+                        <button class="user-btn" id="userDropdownBtn">
+                            <span class="user-avatar" id="userAvatar">U</span>
+                            <span class="user-name" id="userName">사용자</span>
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu" id="userDropdownMenu">
+                            <a href="/dashboard.html" class="dropdown-item">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <rect x="3" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="14" width="7" height="7"></rect>
+                                    <rect x="3" y="14" width="7" height="7"></rect>
+                                </svg>
+                                대시보드
+                            </a>
+                            <a href="/pricing.html" class="dropdown-item">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                                </svg>
+                                플랜 업그레이드
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <button class="dropdown-item" id="logoutBtn">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                    <polyline points="16 17 21 12 16 7"></polyline>
+                                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                                </svg>
+                                로그아웃
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <a href="http://localhost:3001" class="btn btn-secondary">웹 뷰어</a>
+                <a href="/download.html" class="btn btn-primary">다운로드</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div class="container">
+                <h1 class="dashboard-title">안녕하세요, <span id="dashboardUserName">사용자</span>님!</h1>
+                <p class="dashboard-subtitle">LunarView 대시보드에 오신 것을 환영합니다.</p>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="dashboard-content">
+            <div class="container">
+                <!-- Stats Cards -->
+                <div class="dashboard-grid">
+                    <!-- Plan Card -->
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <span class="card-title">현재 플랜</span>
+                            <div class="card-icon">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke-width="2">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                                    <path d="M2 17l10 5 10-5"></path>
+                                    <path d="M2 12l10 5 10-5"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="card-value">
+                            <span class="plan-badge" id="userPlanBadge">무료</span>
+                        </div>
+                        <p class="card-description">
+                            <a href="/pricing.html" style="color: var(--accent-primary);">플랜 업그레이드 →</a>
+                        </p>
+                    </div>
+
+                    <!-- Connections Card -->
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <span class="card-title">총 연결 횟수</span>
+                            <div class="card-icon">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke-width="2">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                    <polyline points="15 3 21 3 21 9"></polyline>
+                                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="card-value" id="totalConnections">-</div>
+                        <p class="card-description">이번 달 연결 기록</p>
+                    </div>
+
+                    <!-- Usage Card -->
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <span class="card-title">총 사용 시간</span>
+                            <div class="card-icon">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="card-value" id="totalUsage">-</div>
+                        <p class="card-description">이번 달 사용량</p>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <a href="http://localhost:3001" class="action-card">
+                        <div class="action-icon">
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke-width="2">
+                                <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                                <line x1="8" y1="21" x2="16" y2="21"></line>
+                                <line x1="12" y1="17" x2="12" y2="21"></line>
+                            </svg>
+                        </div>
+                        <span class="action-title">웹 뷰어 열기</span>
+                    </a>
+                    <a href="/download.html" class="action-card">
+                        <div class="action-icon">
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </div>
+                        <span class="action-title">앱 다운로드</span>
+                    </a>
+                    <a href="/pricing.html" class="action-card">
+                        <div class="action-icon">
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke-width="2">
+                                <line x1="12" y1="1" x2="12" y2="23"></line>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                            </svg>
+                        </div>
+                        <span class="action-title">플랜 관리</span>
+                    </a>
+                    <a href="/contact.html" class="action-card">
+                        <div class="action-icon">
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke-width="2">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                        </div>
+                        <span class="action-title">고객 지원</span>
+                    </a>
+                </div>
+
+                <!-- Profile Section -->
+                <div class="dashboard-grid">
+                    <div class="dashboard-card profile-section">
+                        <h3 class="section-title">계정 정보</h3>
+                        <div class="profile-info">
+                            <div class="profile-item">
+                                <div class="profile-label">이름</div>
+                                <div class="profile-value" id="profileName">-</div>
+                            </div>
+                            <div class="profile-item">
+                                <div class="profile-label">이메일</div>
+                                <div class="profile-value" id="profileEmail">-</div>
+                            </div>
+                            <div class="profile-item">
+                                <div class="profile-label">가입일</div>
+                                <div class="profile-value" id="profileCreatedAt">-</div>
+                            </div>
+                            <div class="profile-item">
+                                <div class="profile-label">계정 상태</div>
+                                <div class="profile-value" style="color: var(--success);">활성</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="dashboard-card">
+                        <h3 class="section-title">최근 활동</h3>
+                        <div class="activity-list" id="activityList">
+                            <div class="empty-state">
+                                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor"
+                                    stroke-width="1.5">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                </svg>
+                                <p>아직 활동 기록이 없습니다.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer legal-footer">
+        <div class="container">
+            <p>&copy; 2024 LunarView. All rights reserved.</p>
+            <div class="footer-links-inline">
+                <a href="/privacy.html">개인정보처리방침</a>
+                <a href="/terms.html">이용약관</a>
+                <a href="/contact.html">문의하기</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="auth.js"></script>
+    <script>
+        const PLAN_NAMES = {
+            free: '무료',
+            personal_pro: '개인 프로',
+            business: '비즈니스',
+            team: '팀'
+        };
+
+        async function loadDashboard() {
+            // 로그인 확인
+            if (!Auth.isLoggedIn()) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const user = Auth.getUser();
+            if (!user) return;
+
+            // 사용자 정보 표시
+            document.getElementById('dashboardUserName').textContent = user.name || '사용자';
+            document.getElementById('profileName').textContent = user.name || '-';
+            document.getElementById('profileEmail').textContent = user.email || '-';
+
+            // 가입일 포맷
+            if (user.created_at) {
+                const date = new Date(user.created_at);
+                document.getElementById('profileCreatedAt').textContent = date.toLocaleDateString('ko-KR');
+            }
+
+            // 플랜 표시
+            const planBadge = document.getElementById('userPlanBadge');
+            planBadge.textContent = PLAN_NAMES[user.plan] || '무료';
+            if (user.plan !== 'free') {
+                planBadge.classList.add('pro');
+            }
+
+            // 연결 횟수 (임시)
+            document.getElementById('totalConnections').textContent = '0회';
+            document.getElementById('totalUsage').textContent = '0분';
+
+            // 구독 정보 조회
+            try {
+                const response = await Auth.fetchWithAuth('http://localhost:8080/api/subscription');
+                const data = await response.json();
+
+                if (data.success && data.subscription) {
+                    // 구독 정보 업데이트 가능
+                }
+            } catch (error) {
+                console.error('Failed to load subscription:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadDashboard);
+    </script>
+</body>
+
+</html>

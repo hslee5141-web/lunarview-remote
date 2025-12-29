@@ -1,0 +1,9 @@
+{
+    "name": "lunarview-website",
+    "version": "1.0.0",
+    "description": "LunarView Landing Page",
+    "scripts": {
+        "dev": "npx live-server --port=3000 --open=/"
+    },
+    "devDependencies": {}
+}

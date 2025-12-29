@@ -1,0 +1,23 @@
+# LunarView Robots.txt
+# https://lunarview.app
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://lunarview.app/sitemap.xml
+
+# Disallow admin and private pages
+Disallow: /admin.html
+Disallow: /dashboard.html
+
+# Allow search engines to crawl all public pages
+Allow: /index.html
+Allow: /features.html
+Allow: /pricing.html
+Allow: /download.html
+Allow: /contact.html
+Allow: /login.html
+Allow: /signup.html
+Allow: /privacy.html
+Allow: /terms.html

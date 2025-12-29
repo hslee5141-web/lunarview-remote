@@ -1,0 +1,46 @@
+{
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "roots": [
+        "<rootDir>/apps",
+        "<rootDir>/packages"
+    ],
+    "testMatch": [
+        "**/__tests__/**/*.test.ts",
+        "**/__tests__/**/*.test.tsx"
+    ],
+    "moduleFileExtensions": [
+        "ts",
+        "tsx",
+        "js",
+        "jsx",
+        "json"
+    ],
+    "collectCoverage": true,
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+        "text",
+        "lcov",
+        "html"
+    ],
+    "coveragePathIgnorePatterns": [
+        "/node_modules/",
+        "/__tests__/",
+        "/dist/"
+    ],
+    "moduleNameMapper": {
+        "^@remote-desktop/(.*)$": "<rootDir>/packages/$1/src"
+    },
+    "transform": {
+        "^.+\\.tsx?$": [
+            "ts-jest",
+            {
+                "tsconfig": "tsconfig.json"
+            }
+        ]
+    },
+    "setupFilesAfterEnv": [
+        "<rootDir>/scripts/jest.setup.ts"
+    ],
+    "testTimeout": 10000
+}

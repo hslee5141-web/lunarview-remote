@@ -1,0 +1,124 @@
+.remote-viewer {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #000;
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 100;
+}
+
+.toolbar-left,
+.toolbar-center,
+.toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status-dot.connected {
+    background: var(--success);
+    box-shadow: 0 0 8px var(--success);
+}
+
+.tool-btn {
+    padding: 8px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.tool-btn:hover {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: white;
+}
+
+.tool-btn.disconnect {
+    background: var(--error);
+    border-color: var(--error);
+    color: white;
+}
+
+.tool-btn.disconnect:hover {
+    background: #dc2626;
+}
+
+.quality-select {
+    padding: 8px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.quality-select:focus {
+    border-color: var(--accent-primary);
+}
+
+.canvas-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #1a1a1a;
+}
+
+.remote-canvas {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    cursor: default;
+}
+
+.remote-canvas:focus {
+    outline: none;
+}
+
+.toggle-toolbar {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 10px;
+    z-index: 101;
+}
+
+.toggle-toolbar:hover {
+    background: var(--accent-primary);
+    color: white;
+}
