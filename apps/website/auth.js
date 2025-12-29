@@ -3,7 +3,7 @@
  * 모든 페이지에서 로그인 상태를 관리합니다.
  */
 
-const API_BASE = 'http://localhost:8080/api';
+const API_BASE = 'https://lunarview-server.onrender.com/api';
 
 // 인증 상태 관리
 const Auth = {
