@@ -24,9 +24,15 @@ const { fixedPassword, trustedDevices, savedConnections } = require('./modules/t
 // ===================
 // 환경 설정
 // ===================
+// 설정 로드
+const APP_CONFIG = require('./config');
+
+// ===================
+// 환경 설정
+// ===================
 const CONFIG = {
-    serverUrl: process.env.SERVER_URL || 'ws://localhost:8080',
-    reconnectInterval: 3000,
+    serverUrl: APP_CONFIG.WS_URL,
+    reconnectInterval: APP_CONFIG.RECONNECT_INTERVAL,
     heartbeatInterval: 30000,
 };
 

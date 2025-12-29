@@ -50,7 +50,8 @@ function resetWebRTCManager(): void {
     webrtcManagerInstance = null;
 }
 
-const SERVER_URL = process.env.SERVER_URL || 'ws://localhost:8080';
+const APP_CONFIG = require('./config');
+const SERVER_URL = APP_CONFIG.WS_URL;
 
 interface ViewerSessionConfig {
     targetConnectionId: string;

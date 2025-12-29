@@ -11,8 +11,11 @@ const store = new Store({
     encryptionKey: 'lunarview-secure-key-2024'
 });
 
+// 설정 로드
+const APP_CONFIG = require('../config');
+
 // API 서버 URL
-const API_BASE = process.env.API_URL || 'http://localhost:8080/api';
+const API_BASE = APP_CONFIG.API_URL;
 
 // 현재 인증 상태
 let authState = {

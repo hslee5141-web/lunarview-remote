@@ -76,8 +76,8 @@
         },
         "publish": {
             "provider": "github",
-            "owner": "YOUR_GITHUB_USERNAME",
-            "repo": "lunarview-desktop",
+            "owner": "hslee5141-web",
+            "repo": "lunarview-remote",
             "releaseType": "release"
         }
     }
