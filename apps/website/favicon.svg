@@ -7,12 +7,16 @@
     </linearGradient>
     <!-- Soft white glow for moon -->
     <filter id="moonGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feGaussianBlur stdDeviation="8" result="blur"/>
       <feMerge>
         <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
+    <!-- Clip path for monitor screen -->
+    <clipPath id="screenClip">
+      <rect x="56" y="56" width="400" height="400" rx="18"/>
+    </clipPath>
   </defs>
   
   <!-- Black background with rounded corners -->
@@ -24,13 +28,13 @@
   <!-- Inner screen (slightly darker) -->
   <rect x="56" y="56" width="400" height="400" rx="18" fill="#0f0f14"/>
   
-  <!-- White crescent moon (sized to fit within monitor screen) -->
-  <g filter="url(#moonGlow)">
-    <path d="M350 256
-             A 120 120 0 1 1 350 256.01
-             A 82 82 0 1 0 350 256
+  <!-- Maximum sized white crescent moon (clipped to screen area) -->
+  <g clip-path="url(#screenClip)" filter="url(#moonGlow)">
+    <path d="M420 256
+             A 170 170 0 1 1 420 256.01
+             A 120 120 0 1 0 420 256
              Z" 
           fill="#f5f5f5" 
-          transform="translate(-94, 0)"/>
+          transform="translate(-164, 0)"/>
   </g>
 </svg>
