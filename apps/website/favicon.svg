@@ -1,16 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
   <defs>
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#8B5CF6"/>
-      <stop offset="100%" stop-color="#7C3AED"/>
+      <stop offset="0%" stop-color="#9F7AEA"/>
+      <stop offset="100%" stop-color="#805AD5"/>
     </linearGradient>
     <linearGradient id="moonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FDE68A"/>
-      <stop offset="100%" stop-color="#FCD34D"/>
+      <stop offset="0%" stop-color="#FBBF24"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
     </linearGradient>
   </defs>
   <!-- Rounded background -->
-  <rect x="0" y="0" width="32" height="32" rx="8" fill="url(#bgGrad)"/>
-  <!-- Thin crescent moon (facing right, matching Coming Soon) -->
-  <path d="M20 6a10 10 0 1 0 0 20 7.5 7.5 0 0 1 0-20z" fill="url(#moonGrad)" transform="rotate(-25 16 16)"/>
+  <rect x="0" y="0" width="32" height="32" rx="7" fill="url(#bgGrad)"/>
+  <!-- Thin crescent moon -->
+  <g transform="translate(16 16) rotate(-20) translate(-16 -16)">
+    <path d="M18 7c4.97 0 9 4.03 9 9s-4.03 9-9 9c-1.5 0-2.9-.37-4.14-1.02A7 7 0 0 0 18 7z" fill="url(#moonGrad)"/>
+  </g>
 </svg>
