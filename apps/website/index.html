@@ -4,867 +4,381 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="LunarView - 빠르고 안전한 원격 데스크톱 솔루션. P2P 연결로 지연 없는 원격 제어를 경험하세요.">
-    <meta name="keywords" content="원격 데스크톱, 원격 제어, 화면 공유, 원격 지원, LunarView">
-    <title>LunarView - 빠르고 안전한 원격 데스크톱</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <title>LunarView - Coming Soon</title>
+    <meta name="description" content="LunarView - 차세대 원격 데스크톱 솔루션이 곧 출시됩니다.">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Stars background */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background-image:
+                radial-gradient(2px 2px at 20px 30px, #eee, transparent),
+                radial-gradient(2px 2px at 40px 70px, rgba(255, 255, 255, 0.8), transparent),
+                radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+                radial-gradient(2px 2px at 160px 120px, rgba(255, 255, 255, 0.9), transparent),
+                radial-gradient(1px 1px at 230px 80px, #fff, transparent),
+                radial-gradient(2px 2px at 300px 150px, rgba(255, 255, 255, 0.7), transparent);
+            background-size: 350px 200px;
+            animation: twinkle 5s ease-in-out infinite;
+        }
+
+        @keyframes twinkle {
+
+            0%,
+            100% {
+                opacity: 0.8;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        /* Moon glow */
+        .moon-glow {
+            position: fixed;
+            top: -100px;
+            right: -100px;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .container {
+            text-align: center;
+            padding: 40px 20px;
+            max-width: 600px;
+            z-index: 10;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 10px 40px rgba(139, 92, 246, 0.4);
+        }
+
+        .logo-text {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #ffffff 0%, #8b5cf6 50%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .features {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 50px;
+            flex-wrap: wrap;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
+
+        .feature-icon {
+            width: 24px;
+            height: 24px;
+            background: rgba(139, 92, 246, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .countdown {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .countdown-item {
+            text-align: center;
+        }
+
+        .countdown-value {
+            font-size: 48px;
+            font-weight: 700;
+            color: #8b5cf6;
+            line-height: 1;
+        }
+
+        .countdown-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 8px;
+        }
+
+        .notify-form {
+            display: flex;
+            gap: 12px;
+            max-width: 400px;
+            margin: 0 auto 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .notify-form input {
+            flex: 1;
+            min-width: 200px;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .notify-form input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .notify-form input:focus {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .notify-form button {
+            padding: 16px 28px;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .notify-form button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .social-link {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            background: rgba(139, 92, 246, 0.3);
+            transform: translateY(-3px);
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 14px;
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 36px;
+            }
+
+            .countdown-value {
+                font-size: 32px;
+            }
+
+            .features {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
 </head>
 
 <body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="container">
-            <a href="/" class="logo">
-                <svg class="logo-icon" viewBox="0 0 24 24" width="32" height="32">
-                    <rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.5"
-                        fill="none" />
-                    <line x1="8" y1="21" x2="16" y2="21" stroke="currentColor" stroke-width="1.5" />
-                    <line x1="12" y1="17" x2="12" y2="21" stroke="currentColor" stroke-width="1.5" />
-                    <path d="M16.5 10A4.5 4.5 0 1 1 9.5 5.5 3.5 3.5 0 0 0 16.5 10z" fill="currentColor" opacity="0.9" />
-                </svg>
-                <span>LunarView</span>
-            </a>
-            <div class="nav-links">
-                <a href="/features.html">기능</a>
-                <a href="/pricing.html">가격</a>
-                <a href="/download.html">다운로드</a>
-                <a href="/contact.html">문의</a>
-            </div>
-            <div class="nav-actions">
-                <!-- 비로그인 상태 -->
-                <div id="nav-guest" class="nav-auth-state">
-                    <a href="/login.html" class="btn btn-ghost">로그인</a>
-                </div>
-                <!-- 로그인 상태 -->
-                <div id="nav-user" class="nav-auth-state" style="display: none;">
-                    <div class="user-dropdown">
-                        <button class="user-btn" id="userDropdownBtn">
-                            <span class="user-avatar" id="userAvatar">U</span>
-                            <span class="user-name" id="userName">사용자</span>
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <polyline points="6 9 12 15 18 9"></polyline>
-                            </svg>
-                        </button>
-                        <div class="dropdown-menu" id="userDropdownMenu">
-                            <a href="/dashboard.html" class="dropdown-item">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <rect x="3" y="3" width="7" height="7"></rect>
-                                    <rect x="14" y="3" width="7" height="7"></rect>
-                                    <rect x="14" y="14" width="7" height="7"></rect>
-                                    <rect x="3" y="14" width="7" height="7"></rect>
-                                </svg>
-                                대시보드
-                            </a>
-                            <a href="/pricing.html" class="dropdown-item">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="12" y1="8" x2="12" y2="16"></line>
-                                    <line x1="8" y1="12" x2="16" y2="12"></line>
-                                </svg>
-                                플랜 업그레이드
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <button class="dropdown-item" id="logoutBtn">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                                    <polyline points="16 17 21 12 16 7"></polyline>
-                                    <line x1="21" y1="12" x2="9" y2="12"></line>
-                                </svg>
-                                로그아웃
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <a href="http://localhost:3001" class="btn btn-secondary">웹 뷰어</a>
-                <a href="/download.html" class="btn btn-primary">무료 다운로드</a>
-            </div>
-            <button class="mobile-menu-btn" aria-label="메뉴">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-        </div>
-    </nav>
+    <div class="stars"></div>
+    <div class="moon-glow"></div>
 
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-bg">
-            <div class="hero-gradient"></div>
-            <div class="hero-orb orb-1"></div>
-            <div class="hero-orb orb-2"></div>
-            <div class="hero-orb orb-3"></div>
-            <!-- Decorative Crescent Moon -->
-            <div class="hero-moon">
-                <svg viewBox="0 0 100 100" width="280" height="280">
-                    <defs>
-                        <linearGradient id="moonFill" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="rgba(255, 255, 255, 0.25)" />
-                            <stop offset="100%" stop-color="rgba(139, 92, 246, 0.2)" />
-                        </linearGradient>
-                        <filter id="moonGlow" x="-50%" y="-50%" width="200%" height="200%">
-                            <feGaussianBlur stdDeviation="4" result="blur" />
-                            <feMerge>
-                                <feMergeNode in="blur" />
-                                <feMergeNode in="SourceGraphic" />
-                            </feMerge>
-                        </filter>
-                    </defs>
-                    <!-- Crescent moon only -->
-                    <path d="M65 50 A 30 30 0 1 1 35 20 A 22 22 0 1 0 65 50 Z" fill="url(#moonFill)"
-                        filter="url(#moonGlow)" transform="rotate(-30, 50, 50)" />
-                </svg>
-            </div>
-            <canvas id="particles-canvas"></canvas>
+    <div class="container">
+        <div class="logo">
+            <div class="logo-icon">🌙</div>
+            <span class="logo-text">LunarView</span>
         </div>
 
-        <div class="container hero-container">
-            <div class="hero-content">
-                <div class="hero-badge">
-                    <span class="badge-dot"></span>
-                    <span>P2P 기반 초저지연 연결</span>
-                </div>
-                <h1 class="hero-title">
-                    <span class="title-line">지연 없는</span>
-                    <span class="title-line gradient-text-animated">원격 데스크톱</span>
-                    <span class="title-line">경험하세요</span>
-                </h1>
-                <p class="hero-description">
-                    P2P 기술로 10ms 지연, AES-256 암호화로 완벽한 보안.<br>
-                    게임도 가능한 고성능 원격 제어.
-                </p>
-                <div class="hero-actions">
-                    <a href="#download" class="btn btn-primary btn-large btn-glow">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="7,10 12,15 17,10" />
-                            <line x1="12" y1="15" x2="12" y2="3" />
-                        </svg>
-                        무료 다운로드
-                    </a>
-                    <a href="http://localhost:3001" class="btn btn-glass btn-large">
-                        <span class="btn-glass-text">브라우저에서 시작</span>
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M5 12h14M12 5l7 7-7 7" />
-                        </svg>
-                    </a>
-                </div>
+        <h1>Coming Soon</h1>
+        <p class="subtitle">
+            차세대 원격 데스크톱 솔루션이 곧 출시됩니다.<br>
+            빠르고, 안전하고, 아름다운 원격 제어를 경험하세요.
+        </p>
+
+        <div class="features">
+            <div class="feature">
+                <span class="feature-icon">🚀</span>
+                <span>초고속 연결</span>
             </div>
-
-            <div class="hero-visual">
-                <div class="visual-container">
-                    <!-- 중앙 허브 -->
-                    <div class="central-hub">
-                        <div class="hub-ring ring-1"></div>
-                        <div class="hub-ring ring-2"></div>
-                        <div class="hub-ring ring-3"></div>
-                        <div class="hub-core">
-                            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor"
-                                stroke-width="1.5">
-                                <rect x="2" y="3" width="20" height="14" rx="2" />
-                                <line x1="8" y1="21" x2="16" y2="21" />
-                                <line x1="12" y1="17" x2="12" y2="21" />
-                            </svg>
-                        </div>
-                    </div>
-
-                    <!-- 연결된 디바이스들 -->
-                    <div class="connected-device device-1">
-                        <div class="device-icon">
-                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
-                                stroke-width="1.5">
-                                <rect x="2" y="4" width="20" height="12" rx="2" />
-                                <line x1="6" y1="20" x2="18" y2="20" />
-                                <line x1="12" y1="16" x2="12" y2="20" />
-                            </svg>
-                        </div>
-                        <div class="device-label">서울</div>
-                    </div>
-                    <div class="connected-device device-2">
-                        <div class="device-icon">
-                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
-                                stroke-width="1.5">
-                                <rect x="2" y="3" width="20" height="14" rx="2" />
-                                <line x1="8" y1="21" x2="16" y2="21" />
-                                <line x1="12" y1="17" x2="12" y2="21" />
-                            </svg>
-                        </div>
-                        <div class="device-label">도쿄</div>
-                    </div>
-                    <div class="connected-device device-3">
-                        <div class="device-icon">
-                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
-                                stroke-width="1.5">
-                                <rect x="6" y="2" width="12" height="20" rx="2" />
-                                <line x1="10" y1="18" x2="14" y2="18" />
-                            </svg>
-                        </div>
-                        <div class="device-label">뉴욕</div>
-                    </div>
-                    <div class="connected-device device-4">
-                        <div class="device-icon">
-                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
-                                stroke-width="1.5">
-                                <rect x="4" y="6" width="16" height="12" rx="2" />
-                                <circle cx="9" cy="12" r="1.5" />
-                                <circle cx="15" cy="12" r="1.5" />
-                                <line x1="4" y1="10" x2="2" y2="8" />
-                                <line x1="4" y1="14" x2="2" y2="16" />
-                                <line x1="20" y1="10" x2="22" y2="8" />
-                                <line x1="20" y1="14" x2="22" y2="16" />
-                            </svg>
-                        </div>
-                        <div class="device-label">런던</div>
-                    </div>
-
-                    <!-- 데이터 패킷 애니메이션 -->
-                    <div class="data-packet packet-1"></div>
-                    <div class="data-packet packet-2"></div>
-                    <div class="data-packet packet-3"></div>
-                    <div class="data-packet packet-4"></div>
-                </div>
-
-                <!-- 실시간 스탯 카드 -->
-                <div class="live-stats">
-                    <div class="live-stat">
-                        <div class="stat-icon">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#8b5cf6"
-                                stroke-width="2">
-                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                            </svg>
-                        </div>
-                        <div class="stat-info">
-                            <span class="stat-value" id="latency-value">8</span>
-                            <span class="stat-unit">ms</span>
-                        </div>
-                        <div class="stat-bar">
-                            <div class="stat-bar-fill" style="width: 95%"></div>
-                        </div>
-                    </div>
-                    <div class="live-stat">
-                        <div class="stat-icon">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#10b981"
-                                stroke-width="2">
-                                <rect x="3" y="11" width="18" height="11" rx="2" />
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                            </svg>
-                        </div>
-                        <div class="stat-info">
-                            <span class="stat-value">AES</span>
-                            <span class="stat-unit">256</span>
-                        </div>
-                        <div class="stat-badge">암호화됨</div>
-                    </div>
-                    <div class="live-stat">
-                        <div class="stat-icon">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#06b6d4"
-                                stroke-width="2">
-                                <rect x="4" y="6" width="16" height="12" rx="2" />
-                                <circle cx="9" cy="12" r="1" />
-                                <circle cx="15" cy="12" r="1" />
-                            </svg>
-                        </div>
-                        <div class="stat-info">
-                            <span class="stat-value" id="fps-value">60</span>
-                            <span class="stat-unit">fps</span>
-                        </div>
-                        <div class="stat-bar">
-                            <div class="stat-bar-fill" style="width: 100%"></div>
-                        </div>
-                    </div>
-                </div>
+            <div class="feature">
+                <span class="feature-icon">🔒</span>
+                <span>종단간 암호화</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">🖥️</span>
+                <span>크로스 플랫폼</span>
             </div>
         </div>
 
-        <!-- 스크롤 인디케이터 -->
-        <div class="scroll-indicator">
-            <div class="scroll-mouse">
-                <div class="scroll-wheel"></div>
+        <div class="countdown">
+            <div class="countdown-item">
+                <div class="countdown-value" id="days">--</div>
+                <div class="countdown-label">Days</div>
             </div>
-            <span>스크롤하여 더 보기</span>
-        </div>
-    </section>
-
-    <!-- Trusted By Section -->
-    <section class="trusted">
-        <div class="container">
-            <p class="trusted-label">신뢰할 수 있는 기술</p>
-            <div class="trusted-logos">
-                <span>WebRTC</span>
-                <span>AES-256</span>
-                <span>Electron</span>
-                <span>React</span>
-                <span>TypeScript</span>
+            <div class="countdown-item">
+                <div class="countdown-value" id="hours">--</div>
+                <div class="countdown-label">Hours</div>
+            </div>
+            <div class="countdown-item">
+                <div class="countdown-value" id="minutes">--</div>
+                <div class="countdown-label">Minutes</div>
+            </div>
+            <div class="countdown-item">
+                <div class="countdown-value" id="seconds">--</div>
+                <div class="countdown-label">Seconds</div>
             </div>
         </div>
-    </section>
 
-    <!-- Features Section -->
-    <section id="features" class="features">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-badge">기능</span>
-                <h2 class="section-title">왜 <span class="gradient-text">LunarView</span>인가요?</h2>
-                <p class="section-description">
-                    빠르고 안전한 차세대 원격 데스크톱 경험
-                </p>
-            </div>
+        <form class="notify-form" onsubmit="handleSubscribe(event)">
+            <input type="email" placeholder="이메일을 입력하세요" required>
+            <button type="submit">알림 받기</button>
+        </form>
 
-            <div class="features-grid">
-                <div class="feature-card feature-highlight">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="url(#grad1)"
-                            stroke-width="1.5">
-                            <defs>
-                                <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stop-color="#8b5cf6" />
-                                    <stop offset="100%" stop-color="#06b6d4" />
-                                </linearGradient>
-                            </defs>
-                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                        </svg>
-                    </div>
-                    <h3>P2P 직접 연결</h3>
-                    <p>서버를 거치지 않고 직접 연결하여 지연 시간을 최소화합니다. 게임, 영상 편집 등 실시간 작업에 최적화되어 있습니다.</p>
-                    <div class="feature-stats">
-                        <div><strong>10ms</strong> 평균 지연</div>
-                        <div><strong>4K</strong> 해상도 지원</div>
-                    </div>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#8b5cf6" stroke-width="1.5">
-                            <rect x="3" y="11" width="18" height="11" rx="2" />
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                            <circle cx="12" cy="16" r="1" />
-                        </svg>
-                    </div>
-                    <h3>종단간 암호화</h3>
-                    <p>AES-256 암호화로 모든 데이터가 보호됩니다. 비밀번호는 세션마다 자동 갱신됩니다.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#8b5cf6" stroke-width="1.5">
-                            <rect x="4" y="6" width="16" height="12" rx="2" />
-                            <circle cx="9" cy="12" r="1.5" />
-                            <circle cx="15" cy="12" r="1.5" />
-                            <line x1="4" y1="10" x2="2" y2="8" />
-                            <line x1="4" y1="14" x2="2" y2="16" />
-                            <line x1="20" y1="10" x2="22" y2="8" />
-                            <line x1="20" y1="14" x2="22" y2="16" />
-                        </svg>
-                    </div>
-                    <h3>게임 모드</h3>
-                    <p>60fps 캡처와 저지연 입력으로 원격으로도 게임을 즐길 수 있습니다.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#8b5cf6" stroke-width="1.5">
-                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-                            <line x1="12" y1="11" x2="12" y2="17" />
-                            <line x1="9" y1="14" x2="15" y2="14" />
-                        </svg>
-                    </div>
-                    <h3>파일 전송</h3>
-                    <p>드래그 앤 드롭으로 간편하게 파일을 전송하세요. 최대 2GB까지 지원합니다.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#8b5cf6" stroke-width="1.5">
-                            <rect x="8" y="2" width="8" height="4" rx="1" />
-                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                            <line x1="12" y1="11" x2="12" y2="17" />
-                            <line x1="9" y1="14" x2="15" y2="14" />
-                        </svg>
-                    </div>
-                    <h3>클립보드 동기화</h3>
-                    <p>텍스트, 이미지, 파일을 복사하면 자동으로 상대방에게 전달됩니다.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#8b5cf6" stroke-width="1.5">
-                            <circle cx="12" cy="12" r="10" />
-                            <line x1="2" y1="12" x2="22" y2="12" />
-                            <path
-                                d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                        </svg>
-                    </div>
-                    <h3>크로스 플랫폼</h3>
-                    <p>Windows, macOS, Linux 데스크톱 앱과 웹 브라우저 뷰어를 지원합니다.</p>
-                </div>
-            </div>
+        <div class="social-links">
+            <a href="#" class="social-link" title="Twitter">𝕏</a>
+            <a href="#" class="social-link" title="GitHub">⌨</a>
+            <a href="#" class="social-link" title="Discord">💬</a>
         </div>
-    </section>
+    </div>
 
-    <!-- Premium Features Section (NEW) -->
-    <section class="premium-features">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-badge">고급 기능</span>
-                <h2 class="section-title"><span class="gradient-text">더 강력한 기능</span></h2>
-                <p class="section-description">
-                    팀 협업과 보안을 위한 프리미엄 기능을 제공합니다
-                </p>
-            </div>
+    <div class="footer">
+        © 2024 LunarView. All rights reserved.
+    </div>
 
-            <div class="premium-grid">
-                <!-- 프라이버시 모드 -->
-                <div class="premium-card">
-                    <div class="premium-icon privacy">
-                        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor"
-                            stroke-width="1.5">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                            <path d="M9 12l2 2 4-4" />
-                        </svg>
-                    </div>
-                    <div class="premium-label">프라이버시 모드</div>
-                    <h3>민감한 정보 자동 보호</h3>
-                    <p>카카오톡, 은행 앱, 비밀번호 관리자 등 민감한 창을 자동으로 감지하고 블러 처리합니다. 원격 지원 중에도 개인정보가 노출되지 않습니다.</p>
-                    <div class="premium-features-list">
-                        <span>앱별 블러 규칙</span>
-                        <span>창 제목 패턴 매칭</span>
-                        <span>실시간 보호</span>
-                    </div>
-                </div>
+    <script>
+        // Set launch date (30 days from now for demo)
+        const launchDate = new Date();
+        launchDate.setDate(launchDate.getDate() + 30);
 
-                <!-- 멀티 커서 협업 -->
-                <div class="premium-card">
-                    <div class="premium-icon collab">
-                        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor"
-                            stroke-width="1.5">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                            <circle cx="9" cy="7" r="4" />
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                        </svg>
-                    </div>
-                    <div class="premium-label">멀티 커서 협업</div>
-                    <h3>함께 작업하는 페어 프로그래밍</h3>
-                    <p>여러 사용자가 동시에 마우스를 제어할 수 있습니다. 각자의 커서가 다른 색상으로 표시되어 실시간 협업이 가능합니다.</p>
-                    <div class="premium-features-list">
-                        <span>최대 5명 동시 접속</span>
-                        <span>실시간 커서 동기화</span>
-                        <span>사용자별 색상 구분</span>
-                    </div>
-                </div>
+        function updateCountdown() {
+            const now = new Date();
+            const diff = launchDate - now;
 
-                <!-- 세션 녹화 -->
-                <div class="premium-card">
-                    <div class="premium-icon recording">
-                        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor"
-                            stroke-width="1.5">
-                            <circle cx="12" cy="12" r="10" />
-                            <polygon points="10 8 16 12 10 16 10 8" />
-                        </svg>
-                    </div>
-                    <div class="premium-label">세션 녹화</div>
-                    <h3>모든 작업을 기록하고 재생</h3>
-                    <p>원격 세션을 녹화하고 타임라인으로 탐색하세요. 마우스, 키보드 이벤트와 마커를 포함하여 교육 및 문서화에 완벽합니다.</p>
-                    <div class="premium-features-list">
-                        <span>WebM 고화질 녹화</span>
-                        <span>이벤트 마커</span>
-                        <span>타임라인 재생</span>
-                    </div>
-                </div>
+            if (diff <= 0) {
+                document.getElementById('days').textContent = '00';
+                document.getElementById('hours').textContent = '00';
+                document.getElementById('minutes').textContent = '00';
+                document.getElementById('seconds').textContent = '00';
+                return;
+            }
 
-                <!-- 워터마크 -->
-                <div class="premium-card">
-                    <div class="premium-icon watermark">
-                        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor"
-                            stroke-width="1.5">
-                            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
-                        </svg>
-                    </div>
-                    <div class="premium-label">보안 워터마크</div>
-                    <h3>화면 유출 방지</h3>
-                    <p>화면에 사용자 정보, 연결 ID, 시간을 워터마크로 표시하여 무단 캡처와 유출을 방지합니다.</p>
-                    <div class="premium-features-list">
-                        <span>타일/중앙/코너 배치</span>
-                        <span>투명도 조절</span>
-                        <span>사용자 정보 자동 표시</span>
-                    </div>
-                </div>
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-                <!-- 빠른 명령 팔레트 -->
-                <div class="premium-card">
-                    <div class="premium-icon command">
-                        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor"
-                            stroke-width="1.5">
-                            <rect x="2" y="4" width="20" height="16" rx="2" />
-                            <path d="M6 8h.01" />
-                            <path d="M10 8h8" />
-                            <path d="M6 12h.01" />
-                            <path d="M10 12h8" />
-                            <path d="M6 16h.01" />
-                            <path d="M10 16h4" />
-                        </svg>
-                    </div>
-                    <div class="premium-label">빠른 명령</div>
-                    <h3>Ctrl+K로 모든 기능 실행</h3>
-                    <p>명령 팔레트로 검색, 연결, 녹화, 설정 등 모든 기능을 즉시 실행하세요. 파워 유저를 위한 생산성 도구입니다.</p>
-                    <div class="premium-features-list">
-                        <span>20+ 내장 명령</span>
-                        <span>최근 사용 우선</span>
-                        <span>키보드 네비게이션</span>
-                    </div>
-                </div>
+            document.getElementById('days').textContent = String(days).padStart(2, '0');
+            document.getElementById('hours').textContent = String(hours).padStart(2, '0');
+            document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
+            document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+        }
 
-                <!-- AI 문제 진단 -->
-                <div class="premium-card">
-                    <div class="premium-icon ai">
-                        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor"
-                            stroke-width="1.5">
-                            <circle cx="12" cy="12" r="3" />
-                            <path d="M12 2v4" />
-                            <path d="M12 18v4" />
-                            <path d="M4.93 4.93l2.83 2.83" />
-                            <path d="M16.24 16.24l2.83 2.83" />
-                            <path d="M2 12h4" />
-                            <path d="M18 12h4" />
-                            <path d="M4.93 19.07l2.83-2.83" />
-                            <path d="M16.24 7.76l2.83-2.83" />
-                        </svg>
-                    </div>
-                    <div class="premium-label">AI 진단</div>
-                    <h3>AI가 문제를 분석하고 해결책 제안</h3>
-                    <p>화면을 캡처하면 AI가 오류를 감지하고 단계별 해결책을 제안합니다. 기술 지원이 더 쉬워집니다.</p>
-                    <div class="premium-features-list">
-                        <span>자동 오류 감지</span>
-                        <span>해결책 제안</span>
-                        <span>진단 히스토리</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
 
-    <!-- How It Works Section -->
-    <section class="how-it-works">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-badge">사용 방법</span>
-                <h2 class="section-title">3단계로 <span class="gradient-text">간단하게</span></h2>
-            </div>
-
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <h3>호스트 PC에 앱 설치</h3>
-                        <p>원격으로 제어받을 PC에 LunarView 데스크톱 앱을 설치하세요.</p>
-                    </div>
-                </div>
-                <div class="step-connector"></div>
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <h3>연결 정보 공유</h3>
-                        <p>앱에 표시되는 9자리 연결 ID와 비밀번호를 상대방에게 전달하세요.</p>
-                    </div>
-                </div>
-                <div class="step-connector"></div>
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <h3>접속 완료!</h3>
-                        <p>데스크톱 앱 또는 웹 뷰어에서 ID/비밀번호를 입력하면 연결됩니다.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Web Viewer Explanation -->
-            <div class="usage-note">
-                <div class="note-icon">
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M12 16v-4" />
-                        <path d="M12 8h.01" />
-                    </svg>
-                </div>
-                <div class="note-content">
-                    <strong>웹 뷰어란?</strong>
-                    <p>앱 설치 없이 브라우저에서 원격 PC에 접속할 수 있습니다. 단, 원격으로 제어받을 PC에는 반드시 데스크톱 앱이 설치되어 있어야 합니다.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Pricing Section -->
-    <section id="pricing" class="pricing">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-badge">가격</span>
-                <h2 class="section-title">심플한 <span class="gradient-text">요금제</span></h2>
-                <p class="section-description">개인 사용은 무료! 비즈니스 기능이 필요하다면 프로 요금제를 선택하세요.</p>
-            </div>
-
-            <div class="pricing-grid">
-                <div class="pricing-card">
-                    <div class="pricing-header">
-                        <h3>무료</h3>
-                        <div class="price">
-                            <span class="currency">₩</span>
-                            <span class="amount">0</span>
-                            <span class="period">/월</span>
-                        </div>
-                        <p class="pricing-description">개인 사용자를 위한 무료 플랜</p>
-                    </div>
-                    <ul class="pricing-features">
-                        <li><span class="check">✓</span> 무제한 P2P 연결</li>
-                        <li><span class="check">✓</span> 1:1 화면 공유</li>
-                        <li><span class="check">✓</span> 종단간 암호화</li>
-                        <li><span class="check">✓</span> 파일 전송 (500MB)</li>
-                        <li><span class="check">✓</span> 웹 뷰어 지원</li>
-                        <li class="disabled"><span class="x">✕</span> 다중 세션</li>
-                        <li class="disabled"><span class="x">✕</span> 주소록</li>
-                    </ul>
-                    <a href="#download" class="btn btn-secondary btn-full">무료로 시작하기</a>
-                </div>
-
-                <div class="pricing-card popular">
-                    <div class="popular-badge">인기</div>
-                    <div class="pricing-header">
-                        <h3>프로</h3>
-                        <div class="price">
-                            <span class="currency">₩</span>
-                            <span class="amount">9,900</span>
-                            <span class="period">/월</span>
-                        </div>
-                        <p class="pricing-description">전문가와 소규모 팀을 위한 플랜</p>
-                    </div>
-                    <ul class="pricing-features">
-                        <li><span class="check">✓</span> 무료 플랜의 모든 기능</li>
-                        <li><span class="check">✓</span> 무제한 세션 시간</li>
-                        <li><span class="check">✓</span> 파일 전송 (2GB)</li>
-                        <li><span class="check">✓</span> 다중 세션 (최대 3개)</li>
-                        <li><span class="check">✓</span> 주소록 & 즐겨찾기</li>
-                        <li><span class="check">✓</span> 우선 지원</li>
-                        <li><span class="check">✓</span> 커스텀 브랜딩</li>
-                    </ul>
-                    <a href="#download" class="btn btn-primary btn-full">프로 시작하기</a>
-                </div>
-
-                <div class="pricing-card">
-                    <div class="pricing-header">
-                        <h3>엔터프라이즈</h3>
-                        <div class="price">
-                            <span class="amount">문의</span>
-                        </div>
-                        <p class="pricing-description">기업을 위한 맞춤형 솔루션</p>
-                    </div>
-                    <ul class="pricing-features">
-                        <li><span class="check">✓</span> 프로 플랜의 모든 기능</li>
-                        <li><span class="check">✓</span> 무제한 사용자</li>
-                        <li><span class="check">✓</span> 자체 서버 호스팅</li>
-                        <li><span class="check">✓</span> SSO 통합</li>
-                        <li><span class="check">✓</span> 감사 로그</li>
-                        <li><span class="check">✓</span> SLA 보장</li>
-                        <li><span class="check">✓</span> 전담 지원</li>
-                    </ul>
-                    <a href="mailto:enterprise@lunarview.app" class="btn btn-secondary btn-full">영업팀 문의</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Download Section -->
-    <section id="download" class="download">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-badge">다운로드</span>
-                <h2 class="section-title">지금 바로 <span class="gradient-text">시작</span>하세요</h2>
-                <p class="section-description">모든 플랫폼에서 무료로 사용할 수 있습니다</p>
-            </div>
-
-            <div class="download-grid">
-                <a href="#" class="download-card">
-                    <div class="download-icon">
-                        <svg viewBox="0 0 24 24" width="48" height="48">
-                            <path fill="currentColor"
-                                d="M3 5.5L10.8 4.1V11.3H3V5.5ZM3 12.5H10.8V19.8L3 18.4V12.5ZM11.8 4L21 2.5V11.3H11.8V4ZM11.8 12.5H21V21.4L11.8 19.9V12.5Z" />
-                        </svg>
-                    </div>
-                    <h3>Windows</h3>
-                    <p>Windows 10/11</p>
-                    <span class="download-btn">다운로드</span>
-                </a>
-
-                <a href="#" class="download-card">
-                    <div class="download-icon">
-                        <svg viewBox="0 0 24 24" width="48" height="48">
-                            <path fill="currentColor"
-                                d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 22 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.1 22C7.79 22.05 6.8 20.68 5.96 19.47C4.25 17 2.94 12.45 4.7 9.39C5.57 7.87 7.13 6.91 8.82 6.88C10.1 6.86 11.32 7.75 12.11 7.75C12.89 7.75 14.37 6.68 15.92 6.84C16.57 6.87 18.39 7.1 19.56 8.82C19.47 8.88 17.39 10.1 17.41 12.63C17.44 15.65 20.06 16.66 20.09 16.67C20.06 16.74 19.67 18.11 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.26 13 3.5Z" />
-                        </svg>
-                    </div>
-                    <h3>macOS</h3>
-                    <p>macOS 11+</p>
-                    <span class="download-btn">다운로드</span>
-                </a>
-
-                <a href="#" class="download-card">
-                    <div class="download-icon">
-                        <svg viewBox="0 0 24 24" width="48" height="48">
-                            <path fill="currentColor"
-                                d="M12.5 2C13.81 2 14.89 3.03 15 4.32L14.97 4.57L14.5 7H20C21.11 7 22 7.89 22 9V11C22 11.26 21.95 11.5 21.86 11.73L19.84 16.73C19.54 17.5 18.82 18 18 18H12C10.89 18 10 17.11 10 16V8L12.5 2ZM7.88 8H4C2.89 8 2 8.89 2 10V16C2 17.11 2.89 18 4 18H7.88V8Z" />
-                        </svg>
-                    </div>
-                    <h3>Linux</h3>
-                    <p>Ubuntu, Fedora, etc.</p>
-                    <span class="download-btn">다운로드</span>
-                </a>
-
-                <a href="http://localhost:3001" class="download-card web">
-                    <div class="download-icon">
-                        <svg viewBox="0 0 24 24" width="48" height="48">
-                            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" />
-                            <ellipse cx="12" cy="12" rx="4" ry="10" fill="none" stroke="currentColor"
-                                stroke-width="2" />
-                            <line x1="2" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2" />
-                        </svg>
-                    </div>
-                    <h3>웹 브라우저</h3>
-                    <p>설치 없이 바로 사용</p>
-                    <span class="download-btn">웹 뷰어 열기</span>
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- FAQ Section -->
-    <section id="faq" class="faq">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-badge">FAQ</span>
-                <h2 class="section-title">자주 묻는 <span class="gradient-text">질문</span></h2>
-            </div>
-
-            <div class="faq-list">
-                <details class="faq-item" open>
-                    <summary>LunarView는 무료인가요?</summary>
-                    <p>네, 개인 사용자는 무료로 사용할 수 있습니다. 무제한 P2P 연결, 화면 공유, 종단간 암호화를 모두 무료로 제공합니다. 추가 기능이 필요한 경우 프로 요금제를 선택하실 수
-                        있습니다.</p>
-                </details>
-
-                <details class="faq-item">
-                    <summary>P2P 연결이 안 될 때는 어떻게 되나요?</summary>
-                    <p>방화벽이나 NAT 환경으로 인해 P2P 연결이 불가능한 경우, 자동으로 릴레이 서버를 통해 연결됩니다. 데이터는 여전히 암호화되어 전송되며, 지연 시간만 약간 증가할 수
-                        있습니다.</p>
-                </details>
-
-                <details class="faq-item">
-                    <summary>보안은 어떻게 보장되나요?</summary>
-                    <p>모든 연결은 AES-256 종단간 암호화로 보호됩니다. 비밀번호는 4자리 영숫자로 생성되며, 세션 종료 시 자동으로 갱신됩니다. 서버는 연결 중개만 할 뿐, 화면 데이터에
-                        접근할 수 없습니다.</p>
-                </details>
-
-                <details class="faq-item">
-                    <summary>게임도 할 수 있나요?</summary>
-                    <p>네! 게임 모드를 활성화하면 60fps 캡처와 최적화된 인코딩으로 원격에서도 게임을 즐길 수 있습니다. P2P 연결 시 10-20ms 수준의 낮은 지연 시간을 제공합니다.
-                    </p>
-                </details>
-
-                <details class="faq-item">
-                    <summary>어떤 운영체제를 지원하나요?</summary>
-                    <p>Windows 10/11, macOS 11 이상, Ubuntu/Fedora 등 주요 Linux 배포판을 지원합니다. 웹 뷰어는 Chrome, Firefox, Safari 등
-                        모던 브라우저에서 설치 없이 사용 가능합니다.</p>
-                </details>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="cta">
-        <div class="container">
-            <div class="cta-content">
-                <h2>시작할 준비가 되셨나요?</h2>
-                <p>지금 바로 LunarView를 다운로드하고 빠르고 안전한 원격 연결을 경험하세요.</p>
-                <div class="cta-actions">
-                    <a href="#download" class="btn btn-primary btn-large">무료 다운로드</a>
-                    <a href="http://localhost:3001" class="btn btn-outline btn-large">웹에서 시작하기</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-brand">
-                    <a href="/" class="logo">
-                        <svg class="logo-icon" viewBox="0 0 24 24" width="28" height="28">
-                            <rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.5"
-                                fill="none" />
-                            <line x1="8" y1="21" x2="16" y2="21" stroke="currentColor" stroke-width="1.5" />
-                            <line x1="12" y1="17" x2="12" y2="21" stroke="currentColor" stroke-width="1.5" />
-                            <path d="M16.5 10A4.5 4.5 0 1 1 9.5 5.5 3.5 3.5 0 0 0 16.5 10z" fill="currentColor"
-                                opacity="0.9" />
-                        </svg>
-                        <span>LunarView</span>
-                    </a>
-                    <p>빠르고 안전한 원격 데스크톱 솔루션</p>
-                </div>
-
-                <div class="footer-links">
-                    <h4>제품</h4>
-                    <a href="/features.html">기능</a>
-                    <a href="/pricing.html">가격</a>
-                    <a href="/download.html">다운로드</a>
-                    <a href="http://localhost:3001">웹 뷰어</a>
-                </div>
-
-                <div class="footer-links">
-                    <h4>지원</h4>
-                    <a href="/contact.html">문의하기</a>
-                    <a href="/login.html">로그인</a>
-                    <a href="/signup.html">회원가입</a>
-                </div>
-
-                <div class="footer-links">
-                    <h4>법적 고지</h4>
-                    <a href="/terms.html">이용약관</a>
-                    <a href="/privacy.html">개인정보처리방침</a>
-                </div>
-            </div>
-
-            <div class="footer-bottom">
-                <p>© 2024 LunarView. All rights reserved.</p>
-                <div class="social-links">
-                    <a href="#" aria-label="GitHub">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                            <path
-                                d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
-                        </svg>
-                    </a>
-                    <a href="#" aria-label="Twitter">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                            <path
-                                d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231zm-1.161 17.52h1.833L7.084 4.126H5.117l11.966 15.644z" />
-                        </svg>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <script src="auth.js"></script>
-    <script src="script.js"></script>
+        function handleSubscribe(e) {
+            e.preventDefault();
+            const email = e.target.querySelector('input').value;
+            alert('감사합니다! ' + email + '로 출시 알림을 보내드리겠습니다.');
+            e.target.reset();
+        }
+    </script>
 </body>
 
 </html>
