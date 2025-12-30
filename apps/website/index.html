@@ -7,6 +7,19 @@
     <title>LunarView - Coming Soon</title>
     <meta name="description" content="LunarView - 차세대 원격 데스크톱 솔루션이 곧 출시됩니다.">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <script>
+        // Check for dev mode in URL or localStorage
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('dev')) {
+            localStorage.setItem('devMode', 'true');
+        }
+
+        if (window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1' ||
+            localStorage.getItem('devMode') === 'true') {
+            window.location.replace('/index_full.html');
+        }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         * {
