@@ -801,15 +801,92 @@ ipcMain.handle('open-external', (_, url) => {
     shell.openExternal(url);
 });
 
-app.whenReady().then(() => {
-    createWindow();
+// 딥링크 설정
+if (process.defaultApp) {
+    if (process.argv.length >= 2) {
+        app.setAsDefaultProtocolClient('lunarview', process.execPath, [path.resolve(process.argv[1])]);
+    }
+} else {
+    app.setAsDefaultProtocolClient('lunarview');
+}
 
-    app.on('activate', () => {
-        if (BrowserWindow.getAllWindows().length === 0) {
-            createWindow();
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+    app.quit();
+} else {
+    app.on('second-instance', (event, commandLine, workingDirectory) => {
+        // 누군가 두 번째 인스턴스를 실행하려고 하면 메인 윈도우에 포커스
+        if (state.mainWindow) {
+            if (state.mainWindow.isMinimized()) state.mainWindow.restore();
+            state.mainWindow.focus();
+        }
+
+        // 딥링크 처리 (Windows)
+        const url = commandLine.find(arg => arg.startsWith('lunarview://'));
+        if (url) {
+            handleDeepLink(url);
         }
     });
-});
+
+    app.on('open-url', (event, url) => {
+        event.preventDefault();
+        handleDeepLink(url);
+    });
+
+    app.whenReady().then(() => {
+        createWindow();
+
+        // 윈도우 (첫 실행) 딥링크 확인
+        if (process.platform === 'win32') {
+            const url = process.argv.find(arg => arg.startsWith('lunarview://'));
+            if (url) handleDeepLink(url);
+        }
+
+        app.on('activate', () => {
+            if (BrowserWindow.getAllWindows().length === 0) {
+                createWindow();
+            }
+        });
+    });
+}
+
+function handleDeepLink(url) {
+    console.log('[Main] Deep link received:', url);
+    try {
+        const urlObj = new URL(url);
+        if (urlObj.hostname === 'auth-callback') {
+            const accessToken = urlObj.searchParams.get('accessToken');
+            const refreshToken = urlObj.searchParams.get('refreshToken');
+
+            if (accessToken && refreshToken) {
+                // 세션 설정
+                desktopAuth.setSession(accessToken, refreshToken);
+
+                if (state.mainWindow && !state.mainWindow.webContents.isLoading()) {
+                    sendToRenderer('oauth-success', { accessToken, refreshToken });
+                    // 메인 윈도우 포커스
+                    if (state.mainWindow.isMinimized()) state.mainWindow.restore();
+                    state.mainWindow.focus();
+                } else {
+                    // 윈도우 로드 대기
+                    const checkInterval = setInterval(() => {
+                        if (state.mainWindow && !state.mainWindow.webContents.isLoading()) {
+                            sendToRenderer('oauth-success', { accessToken, refreshToken });
+                            if (state.mainWindow.isMinimized()) state.mainWindow.restore();
+                            state.mainWindow.focus();
+                            clearInterval(checkInterval);
+                        }
+                    }, 500);
+                    // 10초 후 타임아웃
+                    setTimeout(() => clearInterval(checkInterval), 10000);
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Deep link parse error:', e);
+    }
+}
 
 app.on('window-all-closed', () => {
     disconnectFromServer();

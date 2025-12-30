@@ -68,6 +68,7 @@ export interface ElectronAPI {
     authLogout: () => Promise<{ success: boolean }>;
     authGetState: () => Promise<{ isLoggedIn: boolean; user: any }>;
     authGetUser: () => Promise<any>;
+    onOAuthSuccess: (callback: (data: { accessToken: string; refreshToken: string }) => void) => () => void;
 
     // 플랜 제한
     planGetLimits: () => Promise<any>;

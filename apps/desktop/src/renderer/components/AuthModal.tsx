@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Icon from './Icon';
 import '../styles/auth.css';
 
@@ -18,6 +18,28 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
     const [loading, setLoading] = useState(false);
 
     if (!isOpen) return null;
+
+    useEffect(() => {
+        // OAuth 로그인 성공 리스너
+        const removeListener = window.electronAPI.onOAuthSuccess(async (data: any) => {
+            setLoading(true);
+            try {
+                // 세션은 이미 메인 프로세스에 설정되었으므로 사용자 정보만 가져옴
+                const user = await window.electronAPI.authGetUser();
+                if (user) {
+                    onLoginSuccess(user);
+                    onClose();
+                } else {
+                    setError('사용자 정보를 가져오는데 실패했습니다.');
+                }
+            } catch (err: any) {
+                setError('로그인 처리 중 오류가 발생했습니다.');
+            }
+            setLoading(false);
+        });
+
+        return () => removeListener();
+    }, [isOpen]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -77,6 +99,32 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                     </div>
                     <h2>{mode === 'login' ? '로그인' : '회원가입'}</h2>
                     <p>{mode === 'login' ? 'LunarView 계정으로 로그인하세요.' : '새 계정을 만들어 시작하세요.'}</p>
+                </div>
+
+                {/* 소셜 로그인 버튼 */}
+                <div className="social-auth">
+                    <button
+                        className="social-btn google"
+                        onClick={() => window.electronAPI.openExternal('https://lunarview-server.onrender.com/api/auth/google')}
+                    >
+                        <div className="social-icon">
+                            <Icon name="google" size={18} />
+                        </div>
+                        <span>Google로 계속하기</span>
+                    </button>
+                    <button
+                        className="social-btn github"
+                        onClick={() => window.electronAPI.openExternal('https://lunarview-server.onrender.com/api/auth/github')}
+                    >
+                        <div className="social-icon">
+                            <Icon name="github" size={18} />
+                        </div>
+                        <span>GitHub로 계속하기</span>
+                    </button>
+                </div>
+
+                <div className="auth-divider">
+                    <span>또는 이메일로</span>
                 </div>
 
                 <form onSubmit={handleSubmit} className="auth-form">

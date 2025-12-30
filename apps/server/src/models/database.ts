@@ -36,7 +36,7 @@ export async function initDatabase(): Promise<Pool> {
         client.release();
     }
 
-    // 테이블 생성
+    // 테이블 생성 및 마이그레이션
     await createTables();
 
     console.log('✅ Database initialized');
@@ -44,24 +44,39 @@ export async function initDatabase(): Promise<Pool> {
 }
 
 /**
- * 테이블 생성
+ * 테이블 생성 및 마이그레이션
  */
 async function createTables(): Promise<void> {
     const client = await pool.connect();
     try {
-        // 사용자 테이블
+        // 사용자 테이블 (스키마 업데이트)
         await client.query(`
             CREATE TABLE IF NOT EXISTS users (
                 id TEXT PRIMARY KEY,
                 email TEXT UNIQUE NOT NULL,
-                password_hash TEXT NOT NULL,
+                password_hash TEXT, -- OAuth 사용자는 비밀번호 없음 (Nullable 변경)
                 name TEXT NOT NULL,
                 plan TEXT DEFAULT 'free' CHECK(plan IN ('free', 'personal_pro', 'business', 'team')),
+                provider TEXT DEFAULT 'local', -- local, google, github
+                provider_id TEXT, -- OAuth ID
+                avatar_url TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
             CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
         `);
+
+        // 기존 테이블 마이그레이션 (컬럼 추가)
+        try {
+            await client.query(`
+                ALTER TABLE users ADD COLUMN IF NOT EXISTS provider TEXT DEFAULT 'local';
+                ALTER TABLE users ADD COLUMN IF NOT EXISTS provider_id TEXT;
+                ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+                ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
+            `);
+        } catch (e) {
+            console.log('Migration note: Columns might already exist or alteration skipped.');
+        }
 
         // 구독 테이블
         await client.query(`
@@ -108,7 +123,7 @@ async function createTables(): Promise<void> {
             CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);
         `);
 
-        console.log('✅ Tables created');
+        console.log('✅ Tables created/migrated');
     } finally {
         client.release();
     }
@@ -138,10 +153,10 @@ export async function closeDatabase(): Promise<void> {
 // ==========================================
 
 export const userQueries = {
-    create: async (id: string, email: string, passwordHash: string, name: string, plan: string = 'free') => {
+    create: async (id: string, email: string, passwordHash: string | null, name: string, plan: string = 'free', provider: string = 'local', providerId: string | null = null, avatarUrl: string | null = null) => {
         const result = await pool.query(
-            'INSERT INTO users (id, email, password_hash, name, plan) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-            [id, email, passwordHash, name, plan]
+            'INSERT INTO users (id, email, password_hash, name, plan, provider, provider_id, avatar_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+            [id, email, passwordHash, name, plan, provider, providerId, avatarUrl]
         );
         return result.rows[0];
     },

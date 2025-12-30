@@ -258,5 +258,12 @@ module.exports = {
     getCurrentUser,
     getAuthState,
     getUserPlan,
-    refreshAccessToken
+    refreshAccessToken,
+    setSession: (accessToken, refreshToken) => {
+        authState.accessToken = accessToken;
+        authState.refreshToken = refreshToken;
+        authState.isLoggedIn = true;
+        saveAuth();
+        return true;
+    }
 };

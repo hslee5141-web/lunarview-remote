@@ -109,6 +109,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     authLogout: () => ipcRenderer.invoke('auth-logout'),
     authGetState: () => ipcRenderer.invoke('auth-get-state'),
     authGetUser: () => ipcRenderer.invoke('auth-get-user'),
+    onOAuthSuccess: (callback) => {
+        const handler = (_, data) => callback(data);
+        ipcRenderer.on('oauth-success', handler);
+        return () => ipcRenderer.removeListener('oauth-success', handler);
+    },
 
     // 플랜 제한
     planGetLimits: () => ipcRenderer.invoke('plan-get-limits'),

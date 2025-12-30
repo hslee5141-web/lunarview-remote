@@ -11,6 +11,7 @@ import cors from 'cors';
 import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
 import cookieParser from 'cookie-parser';
+import passport from './config/passport';
 
 // API 및 데이터베이스 임포트
 import { initDatabase, getDatabase } from './models/database';
@@ -26,6 +27,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
+app.use(passport.initialize());
 
 // 데이터베이스 초기화 함수 (비동기)
 async function initializeApp() {

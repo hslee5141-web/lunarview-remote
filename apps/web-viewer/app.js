@@ -17,6 +17,7 @@ class RemoteViewer {
 
         this.initElements();
         this.initEventListeners();
+        this.initSocialLogin();
     }
 
     initElements() {
@@ -107,6 +108,34 @@ class RemoteViewer {
 
         // Prevent zoom
         document.addEventListener('gesturestart', e => e.preventDefault());
+    }
+
+    initSocialLogin() {
+        window.addEventListener('message', (event) => {
+            // 보안을 위해 오리진 확인 (프로덕션 및 로컬 개발 환경)
+            const allowedOrigins = [
+                "https://lunarview-server.onrender.com",
+                "http://localhost:8080"
+            ];
+
+            if (!allowedOrigins.includes(event.origin)) return;
+
+            const { accessToken, refreshToken, user } = event.data;
+
+            if (accessToken) {
+                console.log('Social login success:', user);
+                // 토큰 저장
+                localStorage.setItem('lunarview_token', accessToken);
+                localStorage.setItem('lunarview_refresh_token', refreshToken);
+
+                if (user) {
+                    localStorage.setItem('lunarview_user', JSON.stringify(user));
+                    // 로그인 성공 UI 피드백 (간단히)
+                    this.showError('');
+                    alert(`환영합니다, ${user.name}님!`);
+                }
+            }
+        });
     }
 
     connect() {

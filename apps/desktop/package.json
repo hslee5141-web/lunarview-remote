@@ -49,6 +49,12 @@
         "directories": {
             "output": "release"
         },
+        "protocols": {
+            "name": "LunarView URL Protocol",
+            "schemes": [
+                "lunarview"
+            ]
+        },
         "files": [
             "dist",
             "package.json"
