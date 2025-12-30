@@ -14,9 +14,11 @@
             localStorage.setItem('devMode', 'true');
         }
 
+        // 로그인된 사용자, 개발 모드, 또는 localhost인 경우 정상 사이트로 이동
         if (window.location.hostname === 'localhost' ||
             window.location.hostname === '127.0.0.1' ||
-            localStorage.getItem('devMode') === 'true') {
+            localStorage.getItem('devMode') === 'true' ||
+            localStorage.getItem('accessToken')) {
             window.location.replace('/index_full.html');
         }
     </script>
