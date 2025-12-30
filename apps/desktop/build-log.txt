@@ -1,0 +1,7 @@
+﻿  ??electron-builder  version=24.13.3 os=10.0.26200
+  ??loaded configuration  file=package.json ("build" field)
+  ??@electron/rebuild not required if you use electron-builder, please consider to remove excess dependency from devDependencies
+
+To ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps" to your `package.json`
+  殊?Cannot compute electron version from installed node modules - none of the possible electron modules are installed and version ("^28.0.0") is not fixed in project.
+See https://github.com/electron-userland/electron-builder/issues/3984#issuecomment-504968246

@@ -9,7 +9,7 @@ let screenHeight = 1080;
 
 // robotjs 로드
 try {
-    robot = require('robotjs');
+    robot = require('@jitsi/robotjs');
     const size = robot.getScreenSize();
     screenWidth = size.width;
     screenHeight = size.height;

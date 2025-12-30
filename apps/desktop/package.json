@@ -1,6 +1,6 @@
 {
     "name": "lunarview-desktop",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "LunarView - Remote Desktop Application",
     "author": "LunarView Team <support@lunarview.com>",
     "main": "dist/main/index.js",
@@ -16,68 +16,71 @@
         "dist:mac": "electron-builder --mac",
         "dist:linux": "electron-builder --linux"
     },
-    "dependencies": {
-        "electron-log": "^5.1.1",
-        "electron-store": "^8.1.0",
-        "electron-updater": "^6.1.7",
-        "robotjs": "^0.6.0",
-        "ws": "^8.18.3"
+    "electron-log": "^5.1.1",
+    "electron-store": "^8.1.0",
+    "electron-updater": "^6.1.7",
+    "robotjs": "^0.6.0",
+    "ws": "^8.18.3"
+},
+"optionalDependencies": {
+    "@jitsi/robotjs": "^0.6.18"
+},
+"devDependencies": {
+    "@electron/rebuild": "^4.0.2",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "concurrently": "^8.2.0",
+    "electron": "28.0.0",
+    "electron-builder": "^24.9.1",
+    "electron-packager": "^17.1.2",
+    "electron-vite": "^5.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.3.0",
+    "vite": "^5.0.0",
+    "wait-on": "^7.2.0"
+},
+"build": {
+    "appId": "com.lunarview.desktop",
+    "productName": "LunarView",
+    "icon": "assets/icon.png",
+    "directories": {
+        "output": "release"
     },
-    "devDependencies": {
-        "@electron/rebuild": "^4.0.2",
-        "@types/react": "^18.2.0",
-        "@types/react-dom": "^18.2.0",
-        "@vitejs/plugin-react": "^4.2.0",
-        "concurrently": "^8.2.0",
-        "electron": "^28.0.0",
-        "electron-builder": "^24.9.1",
-        "electron-packager": "^17.1.2",
-        "electron-vite": "^5.0.0",
-        "react": "^18.2.0",
-        "react-dom": "^18.2.0",
-        "typescript": "^5.3.0",
-        "vite": "^5.0.0",
-        "wait-on": "^7.2.0"
+    "files": [
+        "dist",
+        "package.json"
+    ],
+    "win": {
+        "target": [
+            "nsis",
+            "portable"
+        ]
     },
-    "build": {
-        "appId": "com.lunarview.desktop",
-        "productName": "LunarView",
-        "directories": {
-            "output": "release"
-        },
-        "files": [
-            "dist",
-            "package.json"
+    "mac": {
+        "target": [
+            "dmg",
+            "zip"
         ],
-        "win": {
-            "target": [
-                "nsis",
-                "portable"
-            ]
-        },
-        "mac": {
-            "target": [
-                "dmg",
-                "zip"
-            ],
-            "category": "public.app-category.utilities"
-        },
-        "linux": {
-            "target": [
-                "AppImage",
-                "deb"
-            ],
-            "category": "Utility"
-        },
-        "nsis": {
-            "oneClick": false,
-            "allowToChangeInstallationDirectory": true
-        },
-        "publish": {
-            "provider": "github",
-            "owner": "hslee5141-web",
-            "repo": "lunarview-remote",
-            "releaseType": "release"
-        }
+        "category": "public.app-category.utilities"
+    },
+    "linux": {
+        "target": [
+            "AppImage",
+            "deb"
+        ],
+        "category": "Utility"
+    },
+    "nsis": {
+        "oneClick": false,
+        "allowToChangeInstallationDirectory": true
+    },
+    "publish": {
+        "provider": "github",
+        "owner": "hslee5141-web",
+        "repo": "lunarview-remote",
+        "releaseType": "release"
     }
+}
 }

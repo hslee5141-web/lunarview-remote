@@ -108,6 +108,9 @@ export interface ElectronAPI {
     windowMaximize: () => Promise<void>;
     windowClose: () => Promise<void>;
     windowIsMaximized: () => Promise<boolean>;
+
+    // 외부 링크 열기
+    openExternal: (url: string) => Promise<void>;
 }
 
 export interface MouseEventData {

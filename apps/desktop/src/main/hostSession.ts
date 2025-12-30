@@ -4,6 +4,7 @@
  */
 
 import { ipcMain, desktopCapturer, BrowserWindow } from 'electron';
+import WebSocket from 'ws';
 
 // Stub implementations (실제 구현은 packages에 있음)
 class ConnectionManager {

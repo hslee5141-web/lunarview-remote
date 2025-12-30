@@ -3,7 +3,7 @@
  * 모듈화된 메인 프로세스
  */
 
-const { app, BrowserWindow, ipcMain, desktopCapturer, screen, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, desktopCapturer, screen, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -795,6 +795,10 @@ ipcMain.handle('saved-connections-rename', (_, remoteId, newName) => {
 ipcMain.handle('saved-connections-clear', () => {
     savedConnections.clear();
     return { success: true };
+});
+
+ipcMain.handle('open-external', (_, url) => {
+    shell.openExternal(url);
 });
 
 app.whenReady().then(() => {

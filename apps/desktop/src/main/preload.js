@@ -149,4 +149,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     windowMaximize: () => ipcRenderer.invoke('window-maximize'),
     windowClose: () => ipcRenderer.invoke('window-close'),
     windowIsMaximized: () => ipcRenderer.invoke('window-is-maximized'),
+
+    // 외부 링크 열기
+    openExternal: (url) => ipcRenderer.invoke('open-external', url),
 });

@@ -7,7 +7,7 @@ let robot: any = null;
 
 // robotjs 로드 시도
 try {
-    robot = require('robotjs');
+    robot = require('@jitsi/robotjs');
     console.log('robotjs loaded successfully');
 } catch (error) {
     console.warn('robotjs not available, input control disabled:', error);

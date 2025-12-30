@@ -148,7 +148,7 @@ function FileTransferPage() {
                     <button
                         className="btn btn-primary"
                         style={{ marginTop: '16px' }}
-                        onClick={() => window.open('https://lunarview.kr/pricing', '_blank')}
+                        onClick={() => window.electronAPI.openExternal('https://lunarview.kr/pricing')}
                     >
                         <Icon name="star" size={16} />
                         프로 플랜 알아보기

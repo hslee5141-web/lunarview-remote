@@ -3,7 +3,8 @@
     "version": "1.0.0",
     "description": "LunarView Landing Page",
     "scripts": {
-        "dev": "npx live-server --port=3000 --open=/"
+        "dev": "npx live-server --port=3000 --open=/",
+        "build": "echo 'No build required'"
     },
     "devDependencies": {}
 }
