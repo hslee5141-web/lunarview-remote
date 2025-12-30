@@ -8,19 +8,8 @@
     <meta name="description" content="LunarView - 차세대 원격 데스크톱 솔루션이 곧 출시됩니다.">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <script>
-        // Check for dev mode in URL or localStorage
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('dev')) {
-            localStorage.setItem('devMode', 'true');
-        }
-
-        // 로그인된 사용자, 개발 모드, 또는 localhost인 경우 정상 사이트로 이동
-        if (window.location.hostname === 'localhost' ||
-            window.location.hostname === '127.0.0.1' ||
-            localStorage.getItem('devMode') === 'true' ||
-            localStorage.getItem('accessToken')) {
-            window.location.replace('/index_full.html');
-        }
+        // 전체 사이트 공개 - 모든 방문자를 메인 사이트로 리다이렉트
+        window.location.replace('/index_full.html');
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>

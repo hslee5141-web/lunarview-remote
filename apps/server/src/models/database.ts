@@ -60,6 +60,8 @@ async function createTables(): Promise<void> {
                 provider TEXT DEFAULT 'local', -- local, google, github
                 provider_id TEXT, -- OAuth ID
                 avatar_url TEXT,
+                trial_ends_at TIMESTAMP, -- 무료 체험 종료일
+                is_admin BOOLEAN DEFAULT FALSE, -- 관리자 여부
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
@@ -72,6 +74,8 @@ async function createTables(): Promise<void> {
                 ALTER TABLE users ADD COLUMN IF NOT EXISTS provider TEXT DEFAULT 'local';
                 ALTER TABLE users ADD COLUMN IF NOT EXISTS provider_id TEXT;
                 ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+                ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMP;
+                ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE;
                 ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
             `);
         } catch (e) {
@@ -153,10 +157,10 @@ export async function closeDatabase(): Promise<void> {
 // ==========================================
 
 export const userQueries = {
-    create: async (id: string, email: string, passwordHash: string | null, name: string, plan: string = 'free', provider: string = 'local', providerId: string | null = null, avatarUrl: string | null = null) => {
+    create: async (id: string, email: string, passwordHash: string | null, name: string, plan: string = 'free', provider: string = 'local', providerId: string | null = null, avatarUrl: string | null = null, trialEndsAt: string | null = null) => {
         const result = await pool.query(
-            'INSERT INTO users (id, email, password_hash, name, plan, provider, provider_id, avatar_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-            [id, email, passwordHash, name, plan, provider, providerId, avatarUrl]
+            'INSERT INTO users (id, email, password_hash, name, plan, provider, provider_id, avatar_url, trial_ends_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+            [id, email, passwordHash, name, plan, provider, providerId, avatarUrl, trialEndsAt]
         );
         return result.rows[0];
     },
@@ -171,10 +175,31 @@ export const userQueries = {
         return result.rows[0] || null;
     },
 
+    findAll: async () => {
+        const result = await pool.query('SELECT id, email, name, plan, provider, avatar_url, trial_ends_at, is_admin, created_at FROM users ORDER BY created_at DESC');
+        return result.rows;
+    },
+
     updatePlan: async (userId: string, plan: string) => {
         const result = await pool.query(
             'UPDATE users SET plan = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
             [plan, userId]
+        );
+        return result.rows[0];
+    },
+
+    updateTrialEndsAt: async (userId: string, trialEndsAt: string) => {
+        const result = await pool.query(
+            'UPDATE users SET trial_ends_at = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
+            [trialEndsAt, userId]
+        );
+        return result.rows[0];
+    },
+
+    setAdmin: async (userId: string, isAdmin: boolean) => {
+        const result = await pool.query(
+            'UPDATE users SET is_admin = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
+            [isAdmin, userId]
         );
         return result.rows[0];
     },

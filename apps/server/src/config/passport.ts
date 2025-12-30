@@ -66,10 +66,11 @@ passport.use(new GoogleStrategy({
             return done(null, { ...existingUserByEmail, provider: 'google', provider_id: googleId });
         }
 
-        // 3. 새 사용자 생성
+        // 3. 새 사용자 생성 (30일 무료 체험)
         const userId = uuidv4();
-        // userQueries.create 호출 (passwordHash=null)
-        // create 함수 서명: (id, email, passwordHash, name, plan, provider, providerId, avatarUrl)
+        const trialEndsAt = new Date();
+        trialEndsAt.setDate(trialEndsAt.getDate() + 30);
+
         const newUser = await userQueries.create(
             userId,
             email,
@@ -78,7 +79,8 @@ passport.use(new GoogleStrategy({
             'free',
             'google',
             googleId,
-            photo
+            photo,
+            trialEndsAt.toISOString()
         );
 
         return done(null, newUser);
@@ -130,8 +132,11 @@ passport.use(new GitHubStrategy({
             return done(null, { ...existingUserByEmail, provider: 'github', provider_id: githubId });
         }
 
-        // 3. 새 사용자 생성
+        // 3. 새 사용자 생성 (30일 무료 체험)
         const userId = uuidv4();
+        const trialEndsAt = new Date();
+        trialEndsAt.setDate(trialEndsAt.getDate() + 30);
+
         const newUser = await userQueries.create(
             userId,
             email,
@@ -140,7 +145,8 @@ passport.use(new GitHubStrategy({
             'free',
             'github',
             githubId,
-            photo
+            photo,
+            trialEndsAt.toISOString()
         );
 
         return done(null, newUser);

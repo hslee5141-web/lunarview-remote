@@ -15,6 +15,11 @@ export interface User {
     password_hash: string;
     name: string;
     plan: UserPlan;
+    provider?: string;
+    provider_id?: string;
+    avatar_url?: string;
+    trial_ends_at?: string;
+    is_admin?: boolean;
     created_at: string;
     updated_at: string;
 }

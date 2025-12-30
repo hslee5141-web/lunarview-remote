@@ -6,7 +6,7 @@ import { Router, Request, Response } from 'express';
 import { register, login, refreshTokens, logout, getUserById, generateAccessToken, generateRefreshToken } from '../services/auth.service';
 import { authMiddleware } from '../middleware/auth.middleware';
 import passport from '../config/passport';
-import { tokenQueries } from '../models/database'; // 토큰 저장을 위해 필요
+import { tokenQueries, userQueries } from '../models/database'; // 토큰 저장을 위해 필요
 
 const router = Router();
 
@@ -277,7 +277,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
 
 /**
  * GET /api/auth/me
- * 현재 사용자 정보 조회
+ * 현재 사용자 정보 조회 (체험 정보 포함)
  */
 router.get('/me', authMiddleware, async (req: Request, res: Response) => {
     try {
@@ -288,9 +288,109 @@ router.get('/me', authMiddleware, async (req: Request, res: Response) => {
             return;
         }
 
-        res.json({ success: true, user });
+        // 체험 기간 정보 계산
+        let isTrialActive = false;
+        let trialDaysLeft = 0;
+
+        if (user.trial_ends_at) {
+            const trialEnds = new Date(user.trial_ends_at);
+            const now = new Date();
+            isTrialActive = trialEnds > now;
+            trialDaysLeft = Math.max(0, Math.ceil((trialEnds.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+        }
+
+        res.json({
+            success: true,
+            user,
+            trial: {
+                isActive: isTrialActive,
+                daysLeft: trialDaysLeft,
+                endsAt: user.trial_ends_at
+            }
+        });
     } catch (error) {
         console.error('Me route error:', error);
+        res.status(500).json({ success: false, error: '서버 오류가 발생했습니다.' });
+    }
+});
+
+// ==========================================
+// 관리자 API
+// ==========================================
+
+/**
+ * GET /api/auth/admin/users
+ * 모든 사용자 조회 (관리자 전용)
+ */
+router.get('/admin/users', authMiddleware, async (req: Request, res: Response) => {
+    try {
+        const currentUser = await getUserById((req.user as any).userId || (req.user as any).id);
+
+        if (!currentUser?.is_admin) {
+            res.status(403).json({ success: false, error: '관리자 권한이 필요합니다.' });
+            return;
+        }
+
+        const users = await userQueries.findAll();
+        res.json({ success: true, users });
+    } catch (error) {
+        console.error('Admin users error:', error);
+        res.status(500).json({ success: false, error: '서버 오류가 발생했습니다.' });
+    }
+});
+
+/**
+ * PUT /api/auth/admin/users/:userId/plan
+ * 사용자 플랜 변경 (관리자 전용)
+ */
+router.put('/admin/users/:userId/plan', authMiddleware, async (req: Request, res: Response) => {
+    try {
+        const currentUser = await getUserById((req.user as any).userId || (req.user as any).id);
+
+        if (!currentUser?.is_admin) {
+            res.status(403).json({ success: false, error: '관리자 권한이 필요합니다.' });
+            return;
+        }
+
+        const { userId } = req.params;
+        const { plan } = req.body;
+
+        if (!['free', 'personal_pro', 'business', 'team'].includes(plan)) {
+            res.status(400).json({ success: false, error: '유효하지 않은 플랜입니다.' });
+            return;
+        }
+
+        const updatedUser = await userQueries.updatePlan(userId, plan);
+        res.json({ success: true, user: updatedUser });
+    } catch (error) {
+        console.error('Admin update plan error:', error);
+        res.status(500).json({ success: false, error: '서버 오류가 발생했습니다.' });
+    }
+});
+
+/**
+ * PUT /api/auth/admin/users/:userId/trial
+ * 사용자 체험 기간 변경 (관리자 전용)
+ */
+router.put('/admin/users/:userId/trial', authMiddleware, async (req: Request, res: Response) => {
+    try {
+        const currentUser = await getUserById((req.user as any).userId || (req.user as any).id);
+
+        if (!currentUser?.is_admin) {
+            res.status(403).json({ success: false, error: '관리자 권한이 필요합니다.' });
+            return;
+        }
+
+        const { userId } = req.params;
+        const { days } = req.body; // 체험 기간 연장 일수
+
+        const trialEndsAt = new Date();
+        trialEndsAt.setDate(trialEndsAt.getDate() + (days || 30));
+
+        const updatedUser = await userQueries.updateTrialEndsAt(userId, trialEndsAt.toISOString());
+        res.json({ success: true, user: updatedUser });
+    } catch (error) {
+        console.error('Admin update trial error:', error);
         res.status(500).json({ success: false, error: '서버 오류가 발생했습니다.' });
     }
 });

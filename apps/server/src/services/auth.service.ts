@@ -78,9 +78,13 @@ export async function register(email: string, password: string, name: string): P
         // 비밀번호 해싱
         const passwordHash = await hashPassword(password);
 
+        // 30일 무료 체험 기간 설정
+        const trialEndsAt = new Date();
+        trialEndsAt.setDate(trialEndsAt.getDate() + 30);
+
         // 사용자 생성
         const userId = uuidv4();
-        await userQueries.create(userId, email, passwordHash, name);
+        await userQueries.create(userId, email, passwordHash, name, 'free', 'local', null, null, trialEndsAt.toISOString());
 
         // 생성된 사용자 조회
         const user = await userQueries.findById(userId) as User;
