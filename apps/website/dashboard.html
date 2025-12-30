@@ -383,6 +383,10 @@
                         </div>
                         <div class="card-value">
                             <span class="plan-badge" id="userPlanBadge">무료</span>
+                            <div id="trialInfo"
+                                style="display: none; font-size: 13px; margin-top: 8px; color: var(--accent-primary);">
+                                무료 체험 중 (<span id="trialDaysLeft"></span>일 남음)
+                            </div>
                         </div>
                         <p class="card-description">
                             <a href="/pricing.html" style="color: var(--accent-primary);">플랜 업그레이드 →</a>
@@ -527,6 +531,10 @@
             team: '팀'
         };
 
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:8080'
+            : 'https://lunarview-server.onrender.com';
+
         async function loadDashboard() {
             // 로그인 확인
             if (!Auth.isLoggedIn()) {
@@ -534,42 +542,55 @@
                 return;
             }
 
-            const user = Auth.getUser();
-            if (!user) return;
+            // 최신 유저 정보 가져오기 (체험 정보 포함)
+            try {
+                const token = Auth.getToken();
+                const response = await fetch(`${API_BASE}/api/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
 
-            // 사용자 정보 표시
-            document.getElementById('dashboardUserName').textContent = user.name || '사용자';
-            document.getElementById('profileName').textContent = user.name || '-';
-            document.getElementById('profileEmail').textContent = user.email || '-';
+                if (data.success) {
+                    const user = data.user;
+                    const trial = data.trial;
 
-            // 가입일 포맷
-            if (user.created_at) {
-                const date = new Date(user.created_at);
-                document.getElementById('profileCreatedAt').textContent = date.toLocaleDateString('ko-KR');
-            }
+                    // 사용자 정보 표시
+                    document.getElementById('dashboardUserName').textContent = user.name || '사용자';
+                    document.getElementById('profileName').textContent = user.name || '-';
+                    document.getElementById('profileEmail').textContent = user.email || '-';
 
-            // 플랜 표시
-            const planBadge = document.getElementById('userPlanBadge');
-            planBadge.textContent = PLAN_NAMES[user.plan] || '무료';
-            if (user.plan !== 'free') {
-                planBadge.classList.add('pro');
+                    // 가입일 포맷
+                    if (user.created_at) {
+                        const date = new Date(user.created_at);
+                        document.getElementById('profileCreatedAt').textContent = date.toLocaleDateString('ko-KR');
+                    }
+
+                    // 플랜 표시
+                    const planBadge = document.getElementById('userPlanBadge');
+                    planBadge.textContent = PLAN_NAMES[user.plan] || '무료';
+                    if (user.plan !== 'free') {
+                        planBadge.classList.add('pro');
+                    }
+
+                    // 체험 기간 정보 표시
+                    if (trial && trial.isActive) {
+                        const trialInfo = document.getElementById('trialInfo');
+                        const trialDaysLeft = document.getElementById('trialDaysLeft');
+                        trialInfo.style.display = 'block';
+                        trialDaysLeft.textContent = trial.daysLeft;
+
+                        // 체험 기간 중에는 플랜 뱃지도 Pro 스타일로
+                        planBadge.classList.add('pro');
+                        planBadge.textContent = '무료 체험';
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load user info:', error);
             }
 
             // 연결 횟수 (임시)
             document.getElementById('totalConnections').textContent = '0회';
             document.getElementById('totalUsage').textContent = '0분';
-
-            // 구독 정보 조회
-            try {
-                const response = await Auth.fetchWithAuth('http://localhost:8080/api/subscription');
-                const data = await response.json();
-
-                if (data.success && data.subscription) {
-                    // 구독 정보 업데이트 가능
-                }
-            } catch (error) {
-                console.error('Failed to load subscription:', error);
-            }
         }
 
         document.addEventListener('DOMContentLoaded', loadDashboard);

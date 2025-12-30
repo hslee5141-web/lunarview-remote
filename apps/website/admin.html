@@ -435,49 +435,46 @@
     </div>
 
     <script>
-        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const API_BASE = isLocal ? 'http://localhost:8080' : 'https://lunarview-server.onrender.com';
-        let adminApiKey = localStorage.getItem('adminApiKey') || '';
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:8080'
+            : 'https://lunarview-server.onrender.com';
 
-        // 관리자 로그인 확인
-        function checkAdminAuth() {
-            if (adminApiKey) {
-                document.getElementById('adminLogin').style.display = 'none';
+        // 인증 확인
+        async function checkAuth() {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+
+                if (!data.success || !data.user.is_admin) {
+                    alert('관리자 권한이 없습니다.');
+                    window.location.href = '/';
+                    return;
+                }
+
+                // 관리자 확인 완료 -> 대시보드 표시
+                document.getElementById('adminLogin').style.display = 'none'; // 혹시 모를 기존 요소 숨김
                 document.getElementById('adminDashboard').style.display = 'block';
-                loadAdminData();
+                loadUsers(); // 사용자 데이터 로드
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                window.location.href = '/login.html';
             }
         }
 
-        // 관리자 로그인
-        document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const apiKey = document.getElementById('apiKey').value;
-
-            try {
-                const response = await fetch(`${API_BASE}/admin/clients`, {
-                    headers: { 'X-API-Key': apiKey }
-                });
-
-                if (response.ok) {
-                    adminApiKey = apiKey;
-                    localStorage.setItem('adminApiKey', apiKey);
-                    document.getElementById('adminLogin').style.display = 'none';
-                    document.getElementById('adminDashboard').style.display = 'block';
-                    loadAdminData();
-                } else {
-                    alert('올바르지 않은 API 키입니다.');
-                }
-            } catch (error) {
-                alert('서버에 연결할 수 없습니다.');
-            }
-        });
-
-        // 관리자 로그아웃
+        // 로그아웃
         document.getElementById('adminLogoutBtn').addEventListener('click', () => {
-            adminApiKey = '';
-            localStorage.removeItem('adminApiKey');
-            document.getElementById('adminLogin').style.display = 'flex';
-            document.getElementById('adminDashboard').style.display = 'none';
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+            window.location.href = '/login.html';
         });
 
         // 탭 전환
@@ -490,119 +487,134 @@
             });
         });
 
-        // 관리자 데이터 로드
-        async function loadAdminData() {
-            const headers = { 'X-API-Key': adminApiKey };
-
-            // 현재 연결된 클라이언트
+        // 사용자 목록 로드
+        async function loadUsers() {
+            const token = localStorage.getItem('accessToken');
             try {
-                const clientsRes = await fetch(`${API_BASE}/admin/clients`, { headers });
-                const clients = await clientsRes.json();
+                const response = await fetch(`${API_BASE}/api/auth/admin/users`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
 
-                document.getElementById('statCurrentConnections').textContent = clients.length;
-
-                const connectionsBody = document.getElementById('connectionsTableBody');
-                if (clients.length > 0) {
-                    connectionsBody.innerHTML = clients.map(c => `
-                        <tr>
-                            <td><code>${c.connectionId}</code></td>
-                            <td>${c.isHost ? '호스트' : '뷰어'}</td>
-                            <td>${c.connectedTo || '-'}</td>
-                            <td>${new Date(c.connectedAt).toLocaleString('ko-KR')}</td>
-                            <td>${new Date(c.lastActivity).toLocaleString('ko-KR')}</td>
-                        </tr>
-                    `).join('');
-                } else {
-                    connectionsBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">현재 연결된 클라이언트가 없습니다.</td></tr>';
+                if (data.success) {
+                    renderUsers(data.users);
+                    // 통계 업데이트
+                    document.getElementById('statTotalUsers').textContent = data.users.length;
+                    const today = new Date().toISOString().split('T')[0];
+                    const todaySignups = data.users.filter(u => u.created_at.startsWith(today)).length;
+                    document.getElementById('statTodaySignups').textContent = todaySignups;
                 }
-            } catch (e) {
-                console.error('Failed to load clients:', e);
-            }
-
-            // 접근 로그
-            try {
-                const logsRes = await fetch(`${API_BASE}/admin/logs`, { headers });
-                const logs = await logsRes.json();
-
-                const logsBody = document.getElementById('logsTableBody');
-                if (logs.length > 0) {
-                    logsBody.innerHTML = logs.slice(0, 50).map(l => `
-                        <tr>
-                            <td>${new Date(l.timestamp).toLocaleString('ko-KR')}</td>
-                            <td>${l.event}</td>
-                            <td><code>${l.sourceId}</code></td>
-                            <td>${l.targetId ? `<code>${l.targetId}</code>` : '-'}</td>
-                            <td style="color: ${l.success ? 'var(--success)' : 'var(--error)'}">
-                                ${l.success ? '성공' : '실패'}
-                            </td>
-                        </tr>
-                    `).join('');
-                } else {
-                    logsBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">로그가 없습니다.</td></tr>';
-                }
-            } catch (e) {
-                console.error('Failed to load logs:', e);
-            }
-
-            // 사용자 데이터
-            try {
-                const usersRes = await fetch(`${API_BASE}/admin/users`, { headers });
-                const usersData = await usersRes.json();
-
-                document.getElementById('statTotalUsers').textContent = usersData.stats.total;
-                document.getElementById('statTodaySignups').textContent = usersData.stats.todaySignups;
-
-                const PLAN_NAMES = { free: '무료', personal_pro: '개인 프로', business: '비즈니스', team: '팀' };
-                const usersBody = document.getElementById('usersTableBody');
-                if (usersData.users.length > 0) {
-                    usersBody.innerHTML = usersData.users.map(u => `
-                        <tr>
-                            <td>${u.email}</td>
-                            <td>${u.name}</td>
-                            <td><span class="plan-badge ${u.plan === 'free' ? 'free' : 'pro'}">${PLAN_NAMES[u.plan] || u.plan}</span></td>
-                            <td>${new Date(u.created_at).toLocaleDateString('ko-KR')}</td>
-                            <td><span class="status-dot">활성</span></td>
-                        </tr>
-                    `).join('');
-                } else {
-                    usersBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">사용자가 없습니다.</td></tr>';
-                }
-            } catch (e) {
-                console.error('Failed to load users:', e);
-            }
-
-            // 구독 데이터
-            try {
-                const subsRes = await fetch(`${API_BASE}/admin/subscriptions`, { headers });
-                const subsData = await subsRes.json();
-
-                document.getElementById('statActiveSubscriptions').textContent = subsData.activeCount;
-
-                const PLAN_NAMES = { free: '무료', personal_pro: '개인 프로', business: '비즈니스', team: '팀' };
-                const STATUS_NAMES = { active: '활성', cancelled: '취소됨', expired: '만료됨', past_due: '연체' };
-                const subsBody = document.getElementById('subscriptionsTableBody');
-                if (subsData.subscriptions.length > 0) {
-                    subsBody.innerHTML = subsData.subscriptions.map(s => `
-                        <tr>
-                            <td>${s.email}</td>
-                            <td><span class="plan-badge ${s.plan === 'free' ? 'free' : 'pro'}">${PLAN_NAMES[s.plan] || s.plan}</span></td>
-                            <td><span class="status-dot ${s.status !== 'active' ? 'inactive' : ''}">${STATUS_NAMES[s.status] || s.status}</span></td>
-                            <td>${s.current_period_start ? new Date(s.current_period_start).toLocaleDateString('ko-KR') : '-'}</td>
-                            <td>${s.current_period_end ? new Date(s.current_period_end).toLocaleDateString('ko-KR') : '-'}</td>
-                        </tr>
-                    `).join('');
-                } else {
-                    subsBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">구독 정보가 없습니다.</td></tr>';
-                }
-            } catch (e) {
-                console.error('Failed to load subscriptions:', e);
+            } catch (error) {
+                console.error('Failed to load users:', error);
             }
 
             document.getElementById('lastUpdated').textContent = `마지막 업데이트: ${new Date().toLocaleString('ko-KR')}`;
         }
 
+        function renderUsers(users) {
+            const tbody = document.getElementById('usersTableBody');
+            const PLAN_NAMES = { free: '무료', personal_pro: '개인 프로', business: '비즈니스', team: '팀' };
+
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">사용자가 없습니다.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = users.map(u => {
+                const trialInfo = u.trial_ends_at ? `
+                    <div style="font-size: 11px; color: var(--accent-primary); margin-top: 4px;">
+                        체험 종료: ${new Date(u.trial_ends_at).toLocaleDateString()}
+                    </div>
+                ` : '';
+
+                return `
+                <tr>
+                    <td>
+                        <div style="font-weight: 500;">${u.email}</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">${u.provider || 'local'}</div>
+                    </td>
+                    <td>${u.name}</td>
+                    <td>
+                        <select onchange="updatePlan('${u.id}', this.value)" style="padding: 4px; border-radius: 4px; border: 1px solid var(--border-default);">
+                            <option value="free" ${u.plan === 'free' ? 'selected' : ''}>무료</option>
+                            <option value="personal_pro" ${u.plan === 'personal_pro' ? 'selected' : ''}>개인 프로</option>
+                            <option value="business" ${u.plan === 'business' ? 'selected' : ''}>비즈니스</option>
+                            <option value="team" ${u.plan === 'team' ? 'selected' : ''}>팀</option>
+                        </select>
+                    </td>
+                    <td>
+                        ${new Date(u.created_at).toLocaleDateString('ko-KR')}
+                        ${trialInfo}
+                    </td>
+                    <td>
+                        <button onclick="extendTrial('${u.id}')" class="btn btn-outline" style="padding: 4px 8px; font-size: 12px;">+30일 체험</button>
+                    </td>
+                    <td>
+                        <span class="status-dot ${u.is_admin ? '' : 'inactive'}">
+                            ${u.is_admin ? '관리자' : '사용자'}
+                        </span>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        // 플랜 변경
+        window.updatePlan = async (userId, newPlan) => {
+            if (!confirm('사용자의 플랜을 변경하시겠습니까?')) return;
+
+            const token = localStorage.getItem('accessToken');
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/admin/users/${userId}/plan`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ plan: newPlan })
+                });
+
+                if (response.ok) {
+                    alert('플랜이 변경되었습니다.');
+                    loadUsers();
+                } else {
+                    alert('플랜 변경 실패');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('오류가 발생했습니다.');
+            }
+        };
+
+        // 체험 기간 연장
+        window.extendTrial = async (userId) => {
+            const days = prompt('연장할 일수를 입력하세요 (기본 30일):', '30');
+            if (!days) return;
+
+            const token = localStorage.getItem('accessToken');
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/admin/users/${userId}/trial`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ days: parseInt(days) })
+                });
+
+                if (response.ok) {
+                    alert('체험 기간이 연장되었습니다.');
+                    loadUsers();
+                } else {
+                    alert('변경 실패');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('오류가 발생했습니다.');
+            }
+        };
+
         // 초기화
-        checkAdminAuth();
+        checkAuth();
     </script>
 </body>
 

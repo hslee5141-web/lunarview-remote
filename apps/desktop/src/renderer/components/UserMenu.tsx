@@ -3,7 +3,15 @@ import Icon from './Icon';
 import '../styles/plan.css';
 
 interface UserMenuProps {
-    user: { name: string; email: string; plan: string } | null;
+    user: {
+        name: string;
+        email: string;
+        plan: string;
+        trial?: {
+            isActive: boolean;
+            daysLeft: number;
+        };
+    } | null;
     onLogin: () => void;
     onLogout: () => void;
 }
@@ -52,9 +60,14 @@ export default function UserMenu({ user, onLogin, onLogout }: UserMenuProps) {
                         </div>
                         <div className="user-menu-plan">
                             <span className={`plan-badge ${user.plan}`}>
-                                {PLAN_NAMES[user.plan] || '무료'}
+                                {user.trial?.isActive ? '무료 체험' : (PLAN_NAMES[user.plan] || '무료')}
                             </span>
-                            {user.plan === 'free' && (
+                            {user.trial?.isActive && (
+                                <span className="trial-days">
+                                    {user.trial.daysLeft}일 남음
+                                </span>
+                            )}
+                            {(user.plan === 'free' || user.trial?.isActive) && (
                                 <a
                                     href="https://lunarview.app/pricing"
                                     target="_blank"

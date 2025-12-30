@@ -210,9 +210,11 @@ async function getCurrentUser() {
     try {
         const data = await apiRequest('/auth/me');
         if (data.success && data.user) {
-            authState.user = data.user;
+            // 체험 기간 정보 병합
+            const userWithTrial = { ...data.user, trial: data.trial };
+            authState.user = userWithTrial;
             saveAuth();
-            return data.user;
+            return userWithTrial;
         }
     } catch (error) {
         console.error('Get user error:', error);
