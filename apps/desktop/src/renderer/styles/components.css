@@ -15,27 +15,26 @@
 }
 
 /* ================================
-   커스텀 타이틀바 - 테마와 통합
+   커스텀 타이틀바 - 드래그 전용
    ================================ */
 .custom-titlebar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 48px;
-    padding: 0 8px 0 12px;
+    height: 32px;
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--border-subtle);
-    -webkit-app-region: drag;
     user-select: none;
     flex-shrink: 0;
-    gap: 12px;
 }
 
-.titlebar-drag-region {
+.titlebar-drag-area {
+    flex: 1;
     display: flex;
     align-items: center;
     height: 100%;
-    padding-left: 4px;
+    padding-left: 12px;
+    -webkit-app-region: drag;
 }
 
 .titlebar-logo {
@@ -45,11 +44,31 @@
     font-size: 12px;
     font-weight: 600;
     color: var(--text-secondary);
-    -webkit-app-region: no-drag;
+    -webkit-app-region: drag;
 }
 
 .titlebar-logo .icon {
     opacity: 0.8;
+}
+
+/* ================================
+   메뉴 바 - 타이틀바 아래 별도 영역
+   ================================ */
+.menu-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 44px;
+    padding: 0 12px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+}
+
+.menu-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .titlebar-content {

@@ -24,15 +24,12 @@ const { fixedPassword, trustedDevices, savedConnections } = require('./modules/t
 // ===================
 // 환경 설정
 // ===================
-// 설정 로드
-const APP_CONFIG = require('./config');
+// 배포/개발 환경 설정 (직접 인라인)
+const isDev = false; // 배포 서버 사용: false, 로컬 테스트: true
 
-// ===================
-// 환경 설정
-// ===================
 const CONFIG = {
-    serverUrl: APP_CONFIG.WS_URL,
-    reconnectInterval: APP_CONFIG.RECONNECT_INTERVAL,
+    serverUrl: isDev ? 'ws://localhost:8080' : 'wss://lunarview-server.onrender.com',
+    reconnectInterval: 3000,
     heartbeatInterval: 30000,
 };
 
@@ -89,19 +86,31 @@ function createWindow() {
         minHeight: 600,
         frame: false,
         titleBarStyle: 'hidden',
+        icon: path.join(__dirname, '../../assets/icon.png'),
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
+            devTools: false,
             preload: path.join(__dirname, 'preload.js'),
         },
     });
 
     if (process.env.NODE_ENV !== 'production') {
         state.mainWindow.loadURL('http://localhost:5173');
-        state.mainWindow.webContents.openDevTools();
+        // state.mainWindow.webContents.openDevTools();
     } else {
         state.mainWindow.loadFile(path.join(__dirname, '../dist/renderer/index.html'));
     }
+
+    state.mainWindow.once('ready-to-show', () => {
+        state.mainWindow.show();
+        // 개발자 도구 강제 종료 (지연 실행으로 초기화 시점의 자동 열림 방지)
+        setTimeout(() => {
+            if (state.mainWindow && !state.mainWindow.isDestroyed()) {
+                state.mainWindow.webContents.closeDevTools();
+            }
+        }, 500);
+    });
 
     state.mainWindow.on('closed', () => {
         state.mainWindow = null;

@@ -3,7 +3,8 @@
  */
 
 // 개발/배포 환경에 따라 URL 자동 설정
-const isDev = process.env.NODE_ENV === 'development';
+// const isDev = process.env.NODE_ENV === 'development';
+const isDev = false; // 배포 서버 테스트를 위해 임시로 false 설정
 
 // 로컬 개발 서버 URL
 const LOCAL_SERVER_URL = 'localhost:8080';

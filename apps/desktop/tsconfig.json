@@ -21,7 +21,13 @@
         "noFallthroughCasesInSwitch": true,
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
-        "forceConsistentCasingInFileNames": true
+        "forceConsistentCasingInFileNames": true,
+        "types": [
+            "node",
+            "react",
+            "react-dom",
+            "vite/client"
+        ]
     },
     "include": [
         "src/renderer/**/*"

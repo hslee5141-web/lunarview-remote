@@ -184,7 +184,10 @@ function App() {
     return (
         <div className="app" data-theme={theme}>
             <SpaceBackground />
-            <TitleBar>
+            <TitleBar />
+
+            {/* 메뉴 바 - 타이틀바 아래 별도 영역 */}
+            <div className="menu-bar">
                 <nav className="app-nav">
                     <button
                         className={`nav-btn ${isActiveView('host') ? 'active' : ''}`}
@@ -219,7 +222,7 @@ function App() {
                         기록
                     </button>
                 </nav>
-                <div className="titlebar-right">
+                <div className="menu-bar-right">
                     <div className="titlebar-status">
                         <span className={`status-dot ${status === 'session-active' || status === 'connected' ? 'connected' : ''}`}></span>
                         {status === 'session-active' && (
@@ -244,7 +247,7 @@ function App() {
                         <Icon name="help" size={16} />
                     </button>
                 </div>
-            </TitleBar>
+            </div>
 
             <main className="app-content">
                 <div className="main-panel fade-in">

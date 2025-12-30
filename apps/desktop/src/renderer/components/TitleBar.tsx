@@ -1,12 +1,8 @@
-import React, { useState, useEffect, ReactNode } from 'react';
+import React, { useState, useEffect } from 'react';
 import Icon from './Icon';
 import '../types/electron.d';
 
-interface TitleBarProps {
-    children?: ReactNode;
-}
-
-function TitleBar({ children }: TitleBarProps) {
+function TitleBar() {
     const [isMaximized, setIsMaximized] = useState(false);
 
     useEffect(() => {
@@ -39,18 +35,15 @@ function TitleBar({ children }: TitleBarProps) {
 
     return (
         <div className="custom-titlebar">
-            <div className="titlebar-drag-region">
+            {/* 전체 드래그 영역 */}
+            <div className="titlebar-drag-area">
                 <div className="titlebar-logo">
                     <Icon name="lunarview" size={16} />
                     <span>LunarView</span>
                 </div>
             </div>
 
-            {/* 네비게이션 영역 */}
-            <div className="titlebar-content">
-                {children}
-            </div>
-
+            {/* 윈도우 컨트롤 */}
             <div className="titlebar-controls">
                 <button
                     className="titlebar-btn titlebar-btn-minimize"
