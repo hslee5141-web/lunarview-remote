@@ -64,44 +64,60 @@ async function handleOAuthSuccess(req: Request, res: Response) {
         // 여기서는 URL 쿼리 파라미터로 토큰을 전달하는 간단한 HTML 응답을 보냅니다.
         // 실제로는 프론트엔드 URL로 리다이렉트하는 것이 좋습니다.
 
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173'; // 웹 뷰어 주소
-
-        // 웹 뷰어로 리다이렉트 -> 웹 뷰어가 URL 파라미터 읽고 처리 -> 데스크톱이면 딥링크 호출?
-        // 아니면 직접 HTML 응답
+        const frontendUrl = process.env.FRONTEND_URL || 'https://www.lunarview-remote.com';
 
         res.send(`
+            <!DOCTYPE html>
             <html>
             <head>
                 <title>Login Success</title>
-                <script>
-                    const accessToken = "${accessToken}";
-                    const refreshToken = "${refreshToken}";
-                    const user = ${JSON.stringify(user)};
-                    
-                    // 1. 데스크톱 앱 딥링크 시도
-                    window.location.href = "lunarview://auth-callback?accessToken=" + accessToken + "&refreshToken=" + refreshToken;
-                    
-                    // 2. 웹 뷰어용 메시지 (부모 창이 있다면)
-                    if (window.opener) {
-                        window.opener.postMessage({ type: 'oauth-success', accessToken, refreshToken, user }, '*');
-                        window.close();
-                    }
-                    
-                    // 3. 1초 뒤 웹 대시보드로 이동 (데스크톱 앱이 없거나 웹 로그인인 경우)
-                    setTimeout(() => {
-                        window.location.href = "${frontendUrl}/auth/callback?accessToken=" + accessToken + "&refreshToken=" + refreshToken;
-                    }, 1000);
-                </script>
                 <style>
-                    body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #0a0a0f; color: white; }
+                    body { font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #0a0a0f; color: white; margin: 0; }
                     .container { text-align: center; }
+                    h2 { margin-bottom: 8px; }
+                    p { color: #94a3b8; }
                 </style>
             </head>
             <body>
                 <div class="container">
                     <h2>로그인 성공!</h2>
-                    <p>앱으로 돌아가는 중입니다...</p>
+                    <p>잠시만 기다려주세요...</p>
                 </div>
+                <script>
+                    const accessToken = "${accessToken}";
+                    const refreshToken = "${refreshToken}";
+                    const user = ${JSON.stringify(user)};
+                    
+                    // 1. 팝업 창인 경우 (웹 로그인) - 부모 창에 메시지 전송 후 닫기
+                    if (window.opener) {
+                        try {
+                            window.opener.postMessage({ 
+                                type: 'oauth-success', 
+                                accessToken: accessToken, 
+                                refreshToken: refreshToken, 
+                                user: user 
+                            }, '*');
+                            setTimeout(() => window.close(), 500);
+                        } catch (e) {
+                            console.error('Failed to send message to opener:', e);
+                        }
+                    } 
+                    // 2. 직접 열린 창인 경우 (데스크톱 또는 직접 접속)
+                    else {
+                        // 데스크톱 앱 딥링크 시도
+                        const deepLink = "lunarview://auth-callback?accessToken=" + accessToken + "&refreshToken=" + refreshToken;
+                        window.location.href = deepLink;
+                        
+                        // 딥링크 실패 시 (웹에서 직접 접속한 경우) 웹사이트로 리다이렉트
+                        setTimeout(() => {
+                            // 토큰을 localStorage에 저장하고 홈으로 이동
+                            localStorage.setItem('accessToken', accessToken);
+                            localStorage.setItem('refreshToken', refreshToken);
+                            localStorage.setItem('user', JSON.stringify(user));
+                            window.location.href = "${frontendUrl}";
+                        }, 1500);
+                    }
+                </script>
             </body>
             </html>
         `);

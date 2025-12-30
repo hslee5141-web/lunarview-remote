@@ -138,6 +138,27 @@
         if (localStorage.getItem('accessToken')) {
             window.location.href = '/';
         }
+
+        // OAuth 로그인 성공 메시지 수신
+        window.addEventListener('message', function (event) {
+            // 보안: 메시지 출처 확인
+            if (event.data && event.data.type === 'oauth-success') {
+                const { accessToken, refreshToken, user } = event.data;
+
+                // 토큰 저장
+                localStorage.setItem('accessToken', accessToken);
+                if (refreshToken) {
+                    localStorage.setItem('refreshToken', refreshToken);
+                }
+                if (user) {
+                    localStorage.setItem('user', JSON.stringify(user));
+                }
+
+                // 홈으로 리다이렉트
+                alert('로그인 성공!');
+                window.location.href = '/';
+            }
+        });
     </script>
 </body>
 
