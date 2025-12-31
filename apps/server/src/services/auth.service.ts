@@ -8,8 +8,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase, userQueries, tokenQueries } from '../models/database';
 import { User, JWTPayload, UserPlan } from '../types/api.types';
 
-// 환경 변수
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+// 환경 변수 (필수)
+if (!process.env.JWT_SECRET) {
+    throw new Error('❌ JWT_SECRET environment variable is required. Server cannot start without it.');
+}
+const JWT_SECRET: string = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
 const REFRESH_TOKEN_EXPIRES_DAYS = 7;
 const SALT_ROUNDS = 12;

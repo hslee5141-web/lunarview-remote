@@ -51,20 +51,21 @@ async function handleOAuthSuccess(req: Request, res: Response) {
         expiresAt.setDate(expiresAt.getDate() + 7); // 7일
         await tokenQueries.create(user.id, refreshToken, expiresAt.toISOString());
 
-        // 딥링크 리다이렉트 (데스크톱 앱)
-        // 웹에서도 이 링크를 처리할 수 있도록 라우팅 필요
-        // 예: lunarview://auth-callback?token=...&refresh=...
-        // 또는 웹은 /auth-callback 라우트로 이동
-
-        // 클라이언트 타입 감지 (User-Agent 등) - 혹은 쿼리 파라미터로 state 전달 가능
-        // 지금은 단순하게 웹 페이지로 리다이렉트하되, 딥링크를 실행하는 JS가 포함된 페이지로 보낼 수도 있음.
-        // 하지만 가장 깔끔한 건:
-        // 성공 페이지를 렌더링하고, 그 페이지가 window.location.href = "lunarview://..." 를 시도.
-
-        // 여기서는 URL 쿼리 파라미터로 토큰을 전달하는 간단한 HTML 응답을 보냅니다.
-        // 실제로는 프론트엔드 URL로 리다이렉트하는 것이 좋습니다.
-
         const frontendUrl = process.env.FRONTEND_URL || 'https://www.lunarview-remote.com';
+
+        // XSS 방지: 토큰과 사용자 정보를 Base64로 인코딩
+        const safeUser = {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            plan: user.plan,
+            avatar_url: user.avatar_url
+        };
+        const encodedData = Buffer.from(JSON.stringify({
+            accessToken,
+            refreshToken,
+            user: safeUser
+        })).toString('base64');
 
         res.send(`
             <!DOCTYPE html>
@@ -84,39 +85,42 @@ async function handleOAuthSuccess(req: Request, res: Response) {
                     <p>잠시만 기다려주세요...</p>
                 </div>
                 <script>
-                    const accessToken = "${accessToken}";
-                    const refreshToken = "${refreshToken}";
-                    const user = ${JSON.stringify(user)};
-                    
-                    // 1. 팝업 창인 경우 (웹 로그인) - 부모 창에 메시지 전송 후 닫기
-                    if (window.opener) {
+                    (function() {
                         try {
-                            window.opener.postMessage({ 
-                                type: 'oauth-success', 
-                                accessToken: accessToken, 
-                                refreshToken: refreshToken, 
-                                user: user 
-                            }, '*');
-                            setTimeout(() => window.close(), 500);
+                            // Base64 디코딩으로 안전하게 데이터 파싱
+                            const encodedData = "${encodedData}";
+                            const data = JSON.parse(atob(encodedData));
+                            const { accessToken, refreshToken, user } = data;
+                            
+                            // 1. 팝업 창인 경우 (웹 로그인) - 부모 창에 메시지 전송 후 닫기
+                            if (window.opener) {
+                                window.opener.postMessage({ 
+                                    type: 'oauth-success', 
+                                    accessToken: accessToken, 
+                                    refreshToken: refreshToken, 
+                                    user: user 
+                                }, '${frontendUrl}');
+                                setTimeout(function() { window.close(); }, 500);
+                            } 
+                            // 2. 직접 열린 창인 경우 (데스크톱 또는 직접 접속)
+                            else {
+                                // 데스크톱 앱 딥링크 시도
+                                var deepLink = "lunarview://auth-callback?accessToken=" + encodeURIComponent(accessToken) + "&refreshToken=" + encodeURIComponent(refreshToken);
+                                window.location.href = deepLink;
+                                
+                                // 딥링크 실패 시 (웹에서 직접 접속한 경우) 웹사이트로 리다이렉트
+                                setTimeout(function() {
+                                    localStorage.setItem('accessToken', accessToken);
+                                    localStorage.setItem('refreshToken', refreshToken);
+                                    localStorage.setItem('user', JSON.stringify(user));
+                                    window.location.href = "${frontendUrl}";
+                                }, 5000);
+                            }
                         } catch (e) {
-                            console.error('Failed to send message to opener:', e);
+                            console.error('Auth callback error:', e);
+                            document.body.innerHTML = '<div class="container"><h2>오류 발생</h2><p>인증 처리 중 문제가 발생했습니다.</p></div>';
                         }
-                    } 
-                    // 2. 직접 열린 창인 경우 (데스크톱 또는 직접 접속)
-                    else {
-                        // 데스크톱 앱 딥링크 시도
-                        const deepLink = "lunarview://auth-callback?accessToken=" + accessToken + "&refreshToken=" + refreshToken;
-                        window.location.href = deepLink;
-                        
-                        // 딥링크 실패 시 (웹에서 직접 접속한 경우) 웹사이트로 리다이렉트
-                        setTimeout(() => {
-                            // 토큰을 localStorage에 저장하고 홈으로 이동
-                            localStorage.setItem('accessToken', accessToken);
-                            localStorage.setItem('refreshToken', refreshToken);
-                            localStorage.setItem('user', JSON.stringify(user));
-                            window.location.href = "${frontendUrl}";
-                        }, 5000);
-                    }
+                    })();
                 </script>
             </body>
             </html>

@@ -6,12 +6,20 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase, userQueries } from '../models/database';
 import { User, UserPlan } from '../types/api.types';
 
-// 환경 변수 확인
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || 'your-google-client-id';
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || 'your-google-client-secret';
-const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || 'your-github-client-id';
-const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || 'your-github-client-secret';
-const API_URL = process.env.API_URL || 'http://localhost:3000';
+// 환경 변수 확인 (필수)
+const requiredEnvVars = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GITHUB_CLIENT_ID', 'GITHUB_CLIENT_SECRET', 'API_URL'];
+const missingVars = requiredEnvVars.filter(v => !process.env[v]);
+
+if (missingVars.length > 0) {
+    throw new Error(`❌ Missing required environment variables: ${missingVars.join(', ')}`);
+}
+
+// 환경 변수 타입 단언 (위에서 검증 완료)
+const GOOGLE_CLIENT_ID: string = process.env.GOOGLE_CLIENT_ID!;
+const GOOGLE_CLIENT_SECRET: string = process.env.GOOGLE_CLIENT_SECRET!;
+const GITHUB_CLIENT_ID: string = process.env.GITHUB_CLIENT_ID!;
+const GITHUB_CLIENT_SECRET: string = process.env.GITHUB_CLIENT_SECRET!;
+const API_URL: string = process.env.API_URL!;
 
 // Passport 직렬화
 passport.serializeUser((user: any, done) => {

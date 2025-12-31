@@ -11,8 +11,10 @@ import cors from 'cors';
 import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
 import cookieParser from 'cookie-parser';
+import rateLimit from 'express-rate-limit';
 import passport from './config/passport';
 import path from 'path';
+import logger from './utils/logger';
 
 // API 및 데이터베이스 임포트
 import { initDatabase, getDatabase } from './models/database';
@@ -22,28 +24,55 @@ const app = express();
 const server = createServer(app);
 const wss = new WebSocketServer({ server });
 
-app.use(cors({
-    origin: [
+// CORS 설정 (환경별 분리)
+const allowedOrigins = process.env.NODE_ENV === 'production'
+    ? [
+        'https://www.lunarview-remote.com',
+        'https://lunarview-remote.com',
+        'https://lunarview-server.onrender.com'
+    ]
+    : [
         'http://localhost:3000',
         'http://localhost:3001',
         'http://localhost:8080',
         'https://www.lunarview-remote.com',
         'https://lunarview-remote.com',
         'https://lunarview-server.onrender.com'
-    ],
+    ];
+
+app.use(cors({
+    origin: allowedOrigins,
     credentials: true
 }));
 app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());
 
+// Rate Limiting (API 남용 방지)
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15분
+    max: 100, // IP당 100회
+    message: { error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// 인증 관련 Rate Limiting (더 엄격)
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15분
+    max: 20, // IP당 20회
+    message: { error: '로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
 // 데이터베이스 초기화 함수 (비동기)
 async function initializeApp() {
     try {
         await initDatabase();
-        console.log('✅ Database initialized');
+        logger.info('✅ Database initialized');
     } catch (error) {
-        console.error('❌ Database initialization failed:', error);
+        logger.error('❌ Database initialization failed:', error);
         // 개발 환경에서는 DB 없이도 실행 가능하도록
         if (process.env.NODE_ENV === 'production') {
             process.exit(1);
@@ -54,8 +83,10 @@ async function initializeApp() {
 // 정적 파일 서빙 (웹사이트) - Render/Server 배포 시 필수
 app.use(express.static(path.join(__dirname, '../../website')));
 
-// API 라우터 연결
-app.use('/api', apiRouter);
+// API 라우터 연결 (Rate Limiting 적용)
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api', apiLimiter, apiRouter);
 
 // 연결된 클라이언트 관리
 interface Client {
@@ -128,8 +159,11 @@ function recordFailedAttempt(ip: string): void {
 
 // HTTP API
 
-// 환경 변수에서 설정 로드
-const ADMIN_API_KEY = process.env.ADMIN_API_KEY || 'default-admin-key-change-me';
+// 환경 변수에서 설정 로드 (필수)
+const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
+if (!ADMIN_API_KEY) {
+    console.warn('⚠️ ADMIN_API_KEY not set. Admin endpoints will be inaccessible.');
+}
 
 // 관리자 인증 미들웨어
 function adminAuth(req: any, res: any, next: any) {
@@ -626,15 +660,15 @@ async function startServer() {
     await initializeApp();
 
     server.listen(PORT, () => {
-        console.log(`🚀 Remote Desktop Server running on port ${PORT}`);
-        console.log(`   WebSocket: ws://localhost:${PORT}`);
-        console.log(`   Health: http://localhost:${PORT}/health`);
-        console.log(`   🔒 Security features enabled`);
-        console.log(`   🐘 PostgreSQL connected`);
+        logger.info(`🚀 Remote Desktop Server running on port ${PORT}`);
+        logger.info(`   WebSocket: ws://localhost:${PORT}`);
+        logger.info(`   Health: http://localhost:${PORT}/health`);
+        logger.info(`   🔒 Security features enabled`);
+        logger.info(`   🐘 PostgreSQL connected`);
     });
 }
 
 startServer().catch(err => {
-    console.error('Failed to start server:', err);
+    logger.error('Failed to start server:', err);
     process.exit(1);
 });
