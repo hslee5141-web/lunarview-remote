@@ -23,7 +23,14 @@ const server = createServer(app);
 const wss = new WebSocketServer({ server });
 
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    origin: [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://localhost:8080',
+        'https://www.lunarview-remote.com',
+        'https://lunarview-remote.com',
+        'https://lunarview-server.onrender.com'
+    ],
     credentials: true
 }));
 app.use(express.json());
