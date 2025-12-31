@@ -45,12 +45,6 @@
         "directories": {
             "output": "release"
         },
-        "protocols": {
-            "name": "LunarView URL Protocol",
-            "schemes": [
-                "lunarview"
-            ]
-        },
         "files": [
             "dist",
             "package.json",
@@ -83,13 +77,25 @@
         },
         "nsis": {
             "oneClick": false,
-            "allowToChangeInstallationDirectory": true
+            "perMachine": false,
+            "allowToChangeInstallationDirectory": true,
+            "shortcutName": "LunarView"
         },
-        "publish": {
-            "provider": "github",
-            "owner": "hslee5141-web",
-            "repo": "lunarview-remote",
-            "releaseType": "release"
-        }
+        "protocols": [
+            {
+                "name": "LunarView Protocol",
+                "schemes": [
+                    "lunarview"
+                ]
+            }
+        ],
+        "publish": [
+            {
+                "provider": "github",
+                "owner": "hslee5141-web",
+                "repo": "lunarview-remote",
+                "releaseType": "release"
+            }
+        ]
     }
 }

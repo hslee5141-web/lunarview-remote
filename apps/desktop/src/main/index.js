@@ -7,12 +7,12 @@ const { app, BrowserWindow, ipcMain, desktopCapturer, screen, dialog, shell } = 
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-const WebSocket = require('ws');
 
 // 하드웨어 가속 비활성화 (블랙 스크린 문제 해결)
 app.disableHardwareAcceleration();
 
 // 모듈 로드
+const WebSocket = require('ws');
 const inputController = require('./modules/inputController');
 const screenCapture = require('./modules/screenCapture');
 const clipboardSync = require('./modules/clipboardSync');
