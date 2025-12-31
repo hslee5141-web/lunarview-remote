@@ -1,6 +1,6 @@
 {
     "name": "lunarview-desktop",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "description": "LunarView - Remote Desktop Application",
     "author": "LunarView Team <support@lunarview.com>",
     "main": "dist/main/index.js",
@@ -62,9 +62,14 @@
         ],
         "win": {
             "target": [
-                "nsis",
-                "portable"
-            ]
+                {
+                    "target": "nsis",
+                    "arch": [
+                        "x64"
+                    ]
+                }
+            ],
+            "icon": "assets/icon.png"
         },
         "mac": {
             "target": [
