@@ -5,23 +5,26 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.85);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
-    backdrop-filter: blur(4px);
 }
 
 .auth-modal {
+    background: #2b2d31;
+    /* Fallback */
     background: var(--bg-secondary);
+    border: 1px solid #404040;
+    /* Fallback */
     border: 1px solid var(--border-color);
     border-radius: 16px;
     padding: 32px;
     width: 100%;
     max-width: 400px;
     position: relative;
-    animation: modalSlideIn 0.2s ease-out;
+    /* animation removed for stability */
 }
 
 @keyframes modalSlideIn {
