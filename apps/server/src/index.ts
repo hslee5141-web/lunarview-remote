@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
 import cookieParser from 'cookie-parser';
 import passport from './config/passport';
+import path from 'path';
 
 // API 및 데이터베이스 임포트
 import { initDatabase, getDatabase } from './models/database';
@@ -42,6 +43,9 @@ async function initializeApp() {
         }
     }
 }
+
+// 정적 파일 서빙 (웹사이트) - Render/Server 배포 시 필수
+app.use(express.static(path.join(__dirname, '../../website')));
 
 // API 라우터 연결
 app.use('/api', apiRouter);
