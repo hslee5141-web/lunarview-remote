@@ -101,11 +101,10 @@ export interface JWTPayload {
     exp?: number;
 }
 
-// Express Request 확장
+// Express Request 확장 (Passport 타입을 위해 User 인터페이스 확장)
 declare global {
     namespace Express {
-        interface Request {
-            user?: JWTPayload;
-        }
+        // Passport의 User 인터페이스를 JWTPayload와 병합
+        interface User extends JWTPayload { }
     }
 }

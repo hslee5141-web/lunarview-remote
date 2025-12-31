@@ -281,7 +281,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
  */
 router.get('/me', authMiddleware, async (req: Request, res: Response) => {
     try {
-        const user = await getUserById((req.user as any).userId || (req.user as any).id);
+        const user = await getUserById(req.user!.userId);
 
         if (!user) {
             res.status(404).json({ success: false, error: '사용자를 찾을 수 없습니다.' });
