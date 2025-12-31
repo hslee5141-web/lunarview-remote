@@ -194,7 +194,7 @@ class RemoteViewer {
 
             this.ws.onerror = (error) => {
                 console.error('WebSocket error:', error);
-                this.showError('서버 연결 실패');
+                this.showError(`서버 연결 실패 (${serverUrl})`);
                 this.setConnecting(false);
                 this.updateConnectionStatus('error', '연결 실패');
             };
