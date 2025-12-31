@@ -17,7 +17,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    if (!isOpen) return null;
+
 
     useEffect(() => {
         // OAuth 로그인 성공 리스너
@@ -85,6 +85,8 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
         setMode(mode === 'login' ? 'register' : 'login');
         setError('');
     };
+
+    if (!isOpen) return null;
 
     return (
         <div className="auth-modal-overlay" onClick={onClose}>
