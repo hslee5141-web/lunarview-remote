@@ -28,7 +28,7 @@ class RemoteViewer {
         // Connect form
         this.connectionIdInput = document.getElementById('connection-id');
         this.passwordInput = document.getElementById('password');
-        this.serverUrlInput = document.getElementById('server-url');
+        // serverUrlInput removed - URL is now determined dynamically in connect()
         this.connectBtn = document.getElementById('connect-btn');
         this.errorMsg = document.getElementById('error-msg');
         this.connectionStatus = document.getElementById('connection-status');
@@ -139,7 +139,12 @@ class RemoteViewer {
     }
 
     connect() {
-        const serverUrl = this.serverUrlInput.value;
+        // 서버 URL 결정 (프로덕션 vs 로컬)
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const serverUrl = isLocalhost
+            ? 'ws://localhost:8080'
+            : 'wss://lunarview-server.onrender.com';
+
         const connectionId = this.connectionIdInput.value.trim();
         const password = this.passwordInput.value;
 

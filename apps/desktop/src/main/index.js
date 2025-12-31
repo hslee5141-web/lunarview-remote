@@ -95,11 +95,12 @@ function createWindow() {
         },
     });
 
-    if (process.env.NODE_ENV !== 'production') {
+    // 패키징된 앱인지 확인 (app.isPackaged 사용)
+    if (app.isPackaged) {
+        state.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+    } else {
         state.mainWindow.loadURL('http://localhost:5173');
         // state.mainWindow.webContents.openDevTools();
-    } else {
-        state.mainWindow.loadFile(path.join(__dirname, '../dist/renderer/index.html'));
     }
 
     state.mainWindow.once('ready-to-show', () => {
