@@ -14,7 +14,8 @@
     "test": "jest --config jest.config.json",
     "test:watch": "jest --config jest.config.json --watch",
     "test:coverage": "jest --config jest.config.json --coverage",
-    "lint": "eslint . --ext .ts,.tsx"
+    "lint": "eslint . --ext .ts,.tsx",
+    "admin": "npm run admin --workspace=apps/server"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
