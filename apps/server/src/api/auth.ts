@@ -115,7 +115,7 @@ async function handleOAuthSuccess(req: Request, res: Response) {
                             localStorage.setItem('refreshToken', refreshToken);
                             localStorage.setItem('user', JSON.stringify(user));
                             window.location.href = "${frontendUrl}";
-                        }, 1500);
+                        }, 5000);
                     }
                 </script>
             </body>
