@@ -101,8 +101,13 @@ function clearUser() {
 
 /**
  * 현재 플랜 가져오기
+ * 체험 기간 중에는 Pro 플랜 권한 부여
  */
 function getCurrentPlan() {
+    // 체험 기간 활성화 시 Pro 플랜 권한
+    if (currentUser?.trial?.isActive) {
+        return PLANS.PERSONAL_PRO;
+    }
     return currentUser?.plan || PLANS.FREE;
 }
 
