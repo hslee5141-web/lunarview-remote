@@ -13,11 +13,11 @@ const os = require('os');
 // 모듈 로드
 const WebSocket = require('ws');
 const inputController = require('./modules/inputController');
-const screenCapture = require('./modules/screenCapture');
+// const screenCapture = require('./modules/screenCapture');
 const clipboardSync = require('./modules/clipboardSync');
 const fileTransfer = require('./modules/fileTransfer');
 const hotkeyManager = require('./modules/hotkeyManager');
-const { WebRTCManager } = require('./modules/webrtcManager');
+// const { WebRTCManager } = require('./modules/webrtcManager');
 const autoUpdater = require('./modules/autoUpdater');
 const desktopAuth = require('./modules/desktopAuth');
 const planRestrictions = require('./modules/planRestrictions');
@@ -260,17 +260,17 @@ function handleServerMessage(message) {
             sendToRenderer('session-ended', { reason: message.reason });
             break;
 
-        // WebRTC 시그널링
+        // WebRTC 시그널링 (Renderer로 전달)
         case 'webrtc-offer':
-            handleWebRTCOffer(message);
+            sendToRenderer('webrtc-offer', message);
             break;
 
         case 'webrtc-answer':
-            handleWebRTCAnswer(message);
+            sendToRenderer('webrtc-answer', message);
             break;
 
         case 'webrtc-ice-candidate':
-            handleWebRTCIceCandidate(message);
+            sendToRenderer('webrtc-ice-candidate', message);
             break;
 
         case 'pong':
@@ -279,127 +279,19 @@ function handleServerMessage(message) {
 }
 
 // ===================
-// WebRTC P2P
-// ===================
-async function initWebRTC(isInitiator) {
-    if (state.webrtc) {
-        state.webrtc.close();
-    }
-
-    state.webrtc = new WebRTCManager();
-
-    state.webrtc.onIceCandidate = (candidate) => {
-        sendToServer({
-            type: 'webrtc-ice-candidate',
-            candidate
-        });
-    };
-
-    state.webrtc.onConnectionStateChange = (connectionState) => {
-        if (connectionState === 'connected') {
-            console.log('[Main] P2P connected!');
-            state.p2pConnected = true;
-            sendToRenderer('p2p-status', { connected: true });
-        } else if (connectionState === 'failed' || connectionState === 'disconnected') {
-            console.log('[Main] P2P failed, using relay');
-            state.p2pConnected = false;
-            sendToRenderer('p2p-status', { connected: false });
-        }
-    };
-
-    state.webrtc.onDataChannel = (event, data) => {
-        if (event === 'message') {
-            handleP2PMessage(data);
-        }
-    };
-
-    if (isInitiator) {
-        state.webrtc.createDataChannel();
-        const offer = await state.webrtc.createOffer();
-        sendToServer({
-            type: 'webrtc-offer',
-            offer
-        });
-    }
-}
-
-async function handleWebRTCOffer(message) {
-    if (!state.useP2P) return;
-
-    await initWebRTC(false);
-    const answer = await state.webrtc.createAnswer(message.offer);
-    sendToServer({
-        type: 'webrtc-answer',
-        answer
-    });
-}
-
-async function handleWebRTCAnswer(message) {
-    if (state.webrtc) {
-        await state.webrtc.handleAnswer(message.answer);
-    }
-}
-
-async function handleWebRTCIceCandidate(message) {
-    if (state.webrtc) {
-        await state.webrtc.addIceCandidate(message.candidate);
-    }
-}
-
-function handleP2PMessage(data) {
-    try {
-        const message = JSON.parse(data);
-        switch (message.type) {
-            case 'screen-frame':
-                sendToRenderer('screen-frame', message.frame);
-                break;
-            case 'mouse-event':
-                inputController.handleMouseEvent(message.event);
-                break;
-            case 'keyboard-event':
-                inputController.handleKeyboardEvent(message.event);
-                break;
-        }
-    } catch (e) {
-        // 바이너리 데이터 (화면 프레임)
-        sendToRenderer('screen-frame', data);
-    }
-}
-
-// P2P 또는 서버로 전송
-function sendData(message) {
-    // P2P 연결되어 있으면 P2P로 전송
-    if (state.p2pConnected && state.webrtc) {
-        return state.webrtc.send(JSON.stringify(message));
-    }
-    // 아니면 서버 릴레이
-    return sendToServer(message);
-}
-
-// ===================
-// 세션 관리
+// 세션 관리 (Relay Mode for WebRTC)
 // ===================
 function startSession() {
-    // P2P 연결 시도 (호스트)
-    if (state.useP2P && state.isHost) {
-        initWebRTC(true).catch(err => {
-            console.error('[Main] WebRTC init failed:', err);
-        });
-    }
+    // 1. P2P 연결은 Renderer 프로세스에서 직접 수행 (getUserMedia + RTCPeerConnection)
+    // Main 프로세스는 시그널링 릴레이만 담당함 (handleServerMessage에서 처리)
 
-    // 화면 캡처 시작
-    screenCapture.startCapture(
-        (frameData) => {
-            // P2P 연결되면 P2P로, 아니면 서버 릴레이
-            sendData({ type: 'screen-frame', frame: frameData });
-        },
-        () => state.sessionActive
-    );
+    // 2. 화면 캡처 또한 Renderer에서 수행하므로 Main 캡처는 비활성화됨
+    // screenCapture.startCapture() removed.
 
-    // 클립보드 동기화 시작
+    // 3. 클립보드 동기화 시작 (임시로 서버 릴레이 사용, 추후 DataChannel로 이동 권장)
     clipboardSync.startSync(
         (content) => {
-            sendData({ type: 'clipboard-sync', content });
+            sendToServer({ type: 'clipboard-sync', content });
         },
         () => state.sessionActive
     );
@@ -408,7 +300,7 @@ function startSession() {
 function stopSession() {
     state.sessionActive = false;
     state.connectedPeerId = null;
-    screenCapture.stopCapture();
+    screenCapture.stopCapture(); // 혹시 모를 정리
     clipboardSync.stopSync();
 }
 
@@ -525,6 +417,19 @@ ipcMain.on('keyboard-event', (_, event) => {
     }
 });
 
+// WebRTC 시그널링 (Renderer -> Server)
+ipcMain.on('webrtc-offer', (_, offer) => {
+    sendToServer({ type: 'webrtc-offer', offer });
+});
+
+ipcMain.on('webrtc-answer', (_, answer) => {
+    sendToServer({ type: 'webrtc-answer', answer });
+});
+
+ipcMain.on('webrtc-ice-candidate', (_, candidate) => {
+    sendToServer({ type: 'webrtc-ice-candidate', candidate });
+});
+
 ipcMain.handle('select-file', async () => {
     const result = await dialog.showOpenDialog(state.mainWindow, {
         properties: ['openFile']
@@ -551,25 +456,13 @@ ipcMain.handle('get-screens', async () => {
     }));
 });
 
-ipcMain.handle('set-quality', (_, quality) => {
-    return screenCapture.setQuality(quality);
-});
+// Deprecated IPC handlers (Moved to Renderer)
+ipcMain.handle('set-quality', () => true);
+ipcMain.handle('set-game-mode', () => true);
+ipcMain.handle('get-game-mode', () => false);
 
-ipcMain.handle('set-game-mode', (_, enabled) => {
-    return screenCapture.setGameMode(enabled);
-});
-
-ipcMain.handle('get-game-mode', () => {
-    return screenCapture.getGameMode();
-});
-
-ipcMain.handle('get-capture-stats', () => {
-    return screenCapture.getStats();
-});
-
-ipcMain.handle('set-auto-quality', (_, enabled) => {
-    return screenCapture.setAutoQuality(enabled);
-});
+ipcMain.handle('get-capture-stats', () => ({ fps: 60, bandwidth: 0 }));
+ipcMain.handle('set-auto-quality', () => true);
 
 // ===================
 // 단축키 관리

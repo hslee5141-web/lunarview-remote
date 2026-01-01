@@ -72,6 +72,27 @@ contextBridge.exposeInMainWorld('electronAPI', {
         return () => ipcRenderer.removeListener('p2p-status', handler);
     },
 
+    // WebRTC 시그널링
+    sendWebRTCOffer: (offer) => ipcRenderer.send('webrtc-offer', offer),
+    sendWebRTCAnswer: (answer) => ipcRenderer.send('webrtc-answer', answer),
+    sendWebRTCIceCandidate: (candidate) => ipcRenderer.send('webrtc-ice-candidate', candidate),
+
+    onWebRTCOffer: (callback) => {
+        const handler = (_, offer) => callback(offer);
+        ipcRenderer.on('webrtc-offer', handler);
+        return () => ipcRenderer.removeListener('webrtc-offer', handler);
+    },
+    onWebRTCAnswer: (callback) => {
+        const handler = (_, answer) => callback(answer);
+        ipcRenderer.on('webrtc-answer', handler);
+        return () => ipcRenderer.removeListener('webrtc-answer', handler);
+    },
+    onWebRTCIceCandidate: (callback) => {
+        const handler = (_, candidate) => callback(candidate);
+        ipcRenderer.on('webrtc-ice-candidate', handler);
+        return () => ipcRenderer.removeListener('webrtc-ice-candidate', handler);
+    },
+
     // 게임 모드 & 품질
     setGameMode: (enabled) => ipcRenderer.invoke('set-game-mode', enabled),
     getGameMode: () => ipcRenderer.invoke('get-game-mode'),

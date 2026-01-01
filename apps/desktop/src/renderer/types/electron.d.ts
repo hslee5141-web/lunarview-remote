@@ -38,6 +38,15 @@ export interface ElectronAPI {
     onConnectionError: (callback: (error: string) => void) => (() => void) | void;
     onP2PStatus?: (callback: (data: { connected: boolean }) => void) => (() => void) | void;
 
+    // WebRTC 시그널링
+    sendWebRTCOffer: (offer: RTCSessionDescriptionInit) => void;
+    sendWebRTCAnswer: (answer: RTCSessionDescriptionInit) => void;
+    sendWebRTCIceCandidate: (candidate: RTCIceCandidateInit) => void;
+
+    onWebRTCOffer: (callback: (data: { offer: RTCSessionDescriptionInit }) => void) => (() => void) | void;
+    onWebRTCAnswer: (callback: (data: { answer: RTCSessionDescriptionInit }) => void) => (() => void) | void;
+    onWebRTCIceCandidate: (callback: (data: { candidate: RTCIceCandidateInit }) => void) => (() => void) | void;
+
     // 게임 모드 & 품질
     setGameMode: (enabled: boolean) => Promise<void>;
     getGameMode: () => Promise<boolean>;

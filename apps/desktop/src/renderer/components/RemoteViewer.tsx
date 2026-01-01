@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { webRTCManager } from '../utils/WebRTCManager';
 import '../styles/RemoteViewer.css';
 
 interface RemoteViewerProps {
@@ -7,117 +8,121 @@ interface RemoteViewerProps {
 }
 
 function RemoteViewer({ onDisconnect, isViewer = false }: RemoteViewerProps) {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const videoRef = useRef<HTMLVideoElement>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
-    const [quality, setQuality] = useState<'auto' | 'high' | 'medium' | 'low' | 'game'>('auto');
     const [showToolbar, setShowToolbar] = useState(true);
-    const [fps, setFps] = useState(0);
     const [gameMode, setGameMode] = useState(false);
-    const [frameSize, setFrameSize] = useState(0);
-    const frameCountRef = useRef(0);
-    const lastFpsUpdateRef = useRef(Date.now());
-    const frameSizeRef = useRef(0);
+    const [connectionState, setConnectionState] = useState<RTCIceConnectionState>('new');
 
     useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
+        const video = videoRef.current;
+        if (!video) return;
 
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+        // Initialize WebRTC based on role
+        if (isViewer) {
+            webRTCManager.startViewer();
+            webRTCManager.on('remote-stream', (stream: MediaStream) => {
+                console.log('[RemoteViewer] Received remote stream');
+                video.srcObject = stream;
+                video.play().catch(e => console.error('Error playing video:', e));
+            });
+        } else {
+            webRTCManager.startHost();
+            // Optional: Show local stream for host if needed, but we have an overlay
+            /*
+            webRTCManager.on('local-stream', (stream: MediaStream) => {
+                video.srcObject = stream;
+                video.muted = true;
+                video.play();
+            });
+            */
+        }
 
-        // 원격 화면 프레임 수신 리스너
-        window.electronAPI.onScreenFrame((frameData: string) => {
-            frameCountRef.current++;
-            frameSizeRef.current = frameData.length * 0.75 / 1024; // KB 단위
-
-            // FPS 계산
-            const now = Date.now();
-            if (now - lastFpsUpdateRef.current >= 1000) {
-                setFps(frameCountRef.current);
-                setFrameSize(Math.round(frameSizeRef.current));
-                frameCountRef.current = 0;
-                lastFpsUpdateRef.current = now;
-            }
-
-            // Base64 프레임 데이터를 이미지로 변환
-            const img = new Image();
-            img.onload = () => {
-                if (canvas.width !== img.width) canvas.width = img.width;
-                if (canvas.height !== img.height) canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-            };
-            img.src = `data:image/jpeg;base64,${frameData}`;
+        webRTCManager.on('connection-state-change', (state: RTCIceConnectionState) => {
+            setConnectionState(state);
         });
 
-        // 뷰어인 경우에만 입력 이벤트 전송
-        if (isViewer) {
-            const handleMouseMove = (e: MouseEvent) => {
-                const rect = canvas.getBoundingClientRect();
-                const x = (e.clientX - rect.left) / rect.width;
-                const y = (e.clientY - rect.top) / rect.height;
-                window.electronAPI.sendMouseEvent({ type: 'move', x, y } as any);
-            };
-
-            const handleMouseDown = (e: MouseEvent) => {
-                window.electronAPI.sendMouseEvent({ type: 'down', button: e.button } as any);
-            };
-
-            const handleMouseUp = (e: MouseEvent) => {
-                window.electronAPI.sendMouseEvent({ type: 'up', button: e.button } as any);
-            };
-
-            const handleScroll = (e: WheelEvent) => {
-                e.preventDefault();
-                window.electronAPI.sendMouseEvent({
-                    type: 'scroll',
-                    deltaY: e.deltaY
-                } as any);
-            };
-
-            canvas.addEventListener('mousemove', handleMouseMove);
-            canvas.addEventListener('mousedown', handleMouseDown);
-            canvas.addEventListener('mouseup', handleMouseUp);
-            canvas.addEventListener('wheel', handleScroll, { passive: false });
-
-            const handleKeyDown = (e: KeyboardEvent) => {
-                if (document.activeElement === canvas) {
-                    e.preventDefault();
-                    window.electronAPI.sendKeyboardEvent({
-                        type: 'down',
-                        key: e.key,
-                        keyCode: e.keyCode,
-                        ctrlKey: e.ctrlKey,
-                        altKey: e.altKey,
-                        shiftKey: e.shiftKey,
-                    } as any);
-                }
-            };
-
-            const handleKeyUp = (e: KeyboardEvent) => {
-                if (document.activeElement === canvas) {
-                    e.preventDefault();
-                    window.electronAPI.sendKeyboardEvent({
-                        type: 'up',
-                        key: e.key,
-                        keyCode: e.keyCode,
-                    } as any);
-                }
-            };
-
-            window.addEventListener('keydown', handleKeyDown);
-            window.addEventListener('keyup', handleKeyUp);
-            canvas.focus();
-
-            return () => {
-                canvas.removeEventListener('mousemove', handleMouseMove);
-                canvas.removeEventListener('mousedown', handleMouseDown);
-                canvas.removeEventListener('mouseup', handleMouseUp);
-                canvas.removeEventListener('wheel', handleScroll);
-                window.removeEventListener('keydown', handleKeyDown);
-                window.removeEventListener('keyup', handleKeyUp);
-            };
-        }
+        // Cleanup
+        return () => {
+            webRTCManager.close();
+            webRTCManager.removeAllListeners();
+        };
     }, [isViewer]);
+
+    // Input Handling
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video || !isViewer) return;
+
+        const handleMouseMove = (e: MouseEvent) => {
+            const rect = video.getBoundingClientRect();
+            // Normalize coordinates 0..1
+            const x = (e.clientX - rect.left) / rect.width;
+            const y = (e.clientY - rect.top) / rect.height;
+            window.electronAPI.sendMouseEvent({ type: 'move', x, y } as any);
+        };
+
+        const handleMouseDown = (e: MouseEvent) => {
+            window.electronAPI.sendMouseEvent({ type: 'down', button: e.button } as any);
+        };
+
+        const handleMouseUp = (e: MouseEvent) => {
+            window.electronAPI.sendMouseEvent({ type: 'up', button: e.button } as any);
+        };
+
+        const handleScroll = (e: WheelEvent) => {
+            e.preventDefault();
+            window.electronAPI.sendMouseEvent({
+                type: 'scroll',
+                deltaY: e.deltaY
+            } as any);
+        };
+
+        // Attach listeners to video container or video element
+        // Video might capture events, but we need to ensure focus
+        video.addEventListener('mousemove', handleMouseMove);
+        video.addEventListener('mousedown', handleMouseDown);
+        video.addEventListener('mouseup', handleMouseUp);
+        video.addEventListener('wheel', handleScroll, { passive: false });
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (document.activeElement === video || document.body.contains(e.target as Node)) {
+                // e.preventDefault(); // Be careful blocking defaults globally if not focused
+                window.electronAPI.sendKeyboardEvent({
+                    type: 'down',
+                    key: e.key,
+                    keyCode: e.keyCode,
+                    ctrlKey: e.ctrlKey,
+                    altKey: e.altKey,
+                    shiftKey: e.shiftKey,
+                } as any);
+            }
+        };
+
+        const handleKeyUp = (e: KeyboardEvent) => {
+            window.electronAPI.sendKeyboardEvent({
+                type: 'up',
+                key: e.key,
+                keyCode: e.keyCode,
+            } as any);
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+
+        // Focus video to receive inputs
+        video.focus();
+
+        return () => {
+            video.removeEventListener('mousemove', handleMouseMove);
+            video.removeEventListener('mousedown', handleMouseDown);
+            video.removeEventListener('mouseup', handleMouseUp);
+            video.removeEventListener('wheel', handleScroll);
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
+        };
+    }, [isViewer]);
+
 
     const toggleFullscreen = () => {
         if (!document.fullscreenElement) {
@@ -133,28 +138,8 @@ function RemoteViewer({ onDisconnect, isViewer = false }: RemoteViewerProps) {
         const newMode = !gameMode;
         setGameMode(newMode);
         await window.electronAPI.setGameMode?.(newMode);
-        if (newMode) {
-            setQuality('game');
-        } else {
-            setQuality('auto');
-        }
-    };
-
-    const handleQualityChange = async (newQuality: string) => {
-        setQuality(newQuality as any);
-        if (newQuality === 'game') {
-            setGameMode(true);
-            await window.electronAPI.setGameMode?.(true);
-        } else {
-            setGameMode(false);
-            await window.electronAPI.setGameMode?.(false);
-            if (newQuality !== 'auto') {
-                await window.electronAPI.setQuality?.(newQuality);
-                await window.electronAPI.setAutoQuality?.(false);
-            } else {
-                await window.electronAPI.setAutoQuality?.(true);
-            }
-        }
+        // Note: WebRTC constraints might need updatng if we want to dynamic switch, 
+        // but for now we set maxFrameRate 60 in WebRTCManager.
     };
 
     return (
@@ -163,12 +148,8 @@ function RemoteViewer({ onDisconnect, isViewer = false }: RemoteViewerProps) {
                 <div className="toolbar">
                     <div className="toolbar-left">
                         <span className="connection-status">
-                            <span className={`status-dot ${gameMode ? 'game' : 'connected'}`}></span>
-                            {isViewer ? '원격 연결됨' : '화면 공유 중'}
-                        </span>
-                        <span className="fps-indicator">
-                            {fps} FPS
-                            {frameSize > 0 && <span className="frame-size"> · {frameSize}KB</span>}
+                            <span className={`status-dot ${connectionState === 'connected' ? 'connected' : 'connecting'}`}></span>
+                            {isViewer ? '원격 연결됨' : '화면 공유 중'} ({connectionState})
                         </span>
                     </div>
 
@@ -180,19 +161,6 @@ function RemoteViewer({ onDisconnect, isViewer = false }: RemoteViewerProps) {
                         >
                             🎮
                         </button>
-                        <button className="tool-btn" title="클립보드">📋</button>
-                        <button className="tool-btn" title="파일 전송">📁</button>
-                        <select
-                            className="quality-select"
-                            value={quality}
-                            onChange={(e) => handleQualityChange(e.target.value)}
-                        >
-                            <option value="auto">🔄 자동</option>
-                            <option value="game">🎮 게임 (60fps)</option>
-                            <option value="high">✨ 고품질</option>
-                            <option value="medium">📊 중간</option>
-                            <option value="low">📉 저품질</option>
-                        </select>
                     </div>
 
                     <div className="toolbar-right">
@@ -219,13 +187,17 @@ function RemoteViewer({ onDisconnect, isViewer = false }: RemoteViewerProps) {
                     <div className="host-overlay">
                         <h2>🖥️ 화면 공유 중</h2>
                         <p>상대방이 귀하의 화면을 보고 있습니다</p>
+                        <p>WebRTC 연결 상태: {connectionState}</p>
                         {gameMode && <p className="game-mode-badge">🎮 게임 모드 활성</p>}
                     </div>
                 )}
-                <canvas
-                    ref={canvasRef}
-                    className="remote-canvas"
+                <video
+                    ref={videoRef}
+                    className="remote-canvas" // Keeping class name for styles
+                    autoPlay
+                    playsInline
                     tabIndex={0}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: '#000' }}
                 />
             </div>
 
