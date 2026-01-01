@@ -62,7 +62,7 @@ router.post('/generate', (req: Request, res: Response) => {
         // });
 
         // 프로덕션 도메인 사용
-        const qrData = `https://lunarview.app/qr-login.html?sessionId=${sessionId}`;
+        const qrData = `https://lunarview-remote.com/qr-login.html?sessionId=${sessionId}`;
 
         res.json({
             success: true,
