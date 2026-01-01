@@ -71,17 +71,27 @@ function restartCaptureLoop() {
         isCapturingFrame = true;
 
         try {
+            // console.time('captureFrame');
             const quality = isGameMode ? (lastFrameSize > AUTO_QUALITY_THRESHOLDS.highToMedium ? 'gamelow' : 'game') : currentQuality;
             const settings = qualitySettings[quality];
 
+            const startCapture = Date.now();
             const sources = await desktopCapturer.getSources({
                 types: ['screen'],
                 thumbnailSize: { width: settings.width, height: settings.height },
             });
+            const captureTime = Date.now() - startCapture;
 
             if (sources.length > 0) {
+                const startEncode = Date.now();
                 const frame = sources[0].thumbnail.toJPEG(settings.jpeg);
+                const encodeTime = Date.now() - startEncode;
+
                 lastFrameSize = frame.length;
+
+                if (captureTime + encodeTime > 40) {
+                    console.log(`[Perf] Capture: ${captureTime}ms, Encode: ${encodeTime}ms, Total: ${captureTime + encodeTime}ms, Size: ${frame.length}b`);
+                }
 
                 if (onFrameCallback) {
                     onFrameCallback(frame.toString('base64'));
