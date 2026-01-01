@@ -121,14 +121,18 @@ function updateNavUI() {
             // 플랜 뱃지 표시
             const userPlanBadgeNav = document.getElementById('userPlanBadgeNav');
             if (userPlanBadgeNav && user.plan) {
-                let planText = '무료';
-                let planClass = 'free';
+                const PLAN_NAMES = {
+                    'free': '무료',
+                    'personal_pro': '개인 프로',
+                    'business': '비즈니스',
+                    'team': '팀'
+                };
+
+                let planText = PLAN_NAMES[user.plan] || '무료';
+                let planClass = user.plan === 'free' ? 'free' : 'pro';
 
                 if (user.trial && user.trial.isActive) {
                     planText = '체험중';
-                    planClass = 'pro';
-                } else if (user.plan !== 'free') {
-                    planText = 'PRO';
                     planClass = 'pro';
                 }
 

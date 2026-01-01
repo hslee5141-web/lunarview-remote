@@ -43,7 +43,7 @@ export default function UserMenu({ user, onLogin, onLogout }: UserMenuProps) {
                 </div>
                 <span className="user-name">{user.name}</span>
                 <span className={`plan-badge small ${user.trial?.isActive ? 'personal_pro' : user.plan}`}>
-                    {user.trial?.isActive ? '체험중' : (user.plan === 'free' ? '무료' : 'PRO')}
+                    {user.trial?.isActive ? '체험중' : (PLAN_NAMES[user.plan] || '무료')}
                 </span>
                 <Icon name="chevronDown" size={12} />
             </button>
