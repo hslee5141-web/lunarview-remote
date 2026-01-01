@@ -83,7 +83,6 @@ export class WebRTCManager extends BrowserEventEmitter {
 
     public async startHost() {
         this.isHost = true;
-        this.viewerReady = false; // Reset flag
         console.log('[WebRTCManager] Starting Host - preparing stream...');
         try {
             // 1. Get Screen Source
@@ -114,7 +113,7 @@ export class WebRTCManager extends BrowserEventEmitter {
             this.localStream = stream;
             this.emit('local-stream', stream);
 
-            // 3. Create PeerConnection and add tracks (but don't send offer yet)
+            // 3. Create PeerConnection and add tracks
             this.createPeerConnection();
             stream.getTracks().forEach(track => {
                 if (this.peerConnection) {
@@ -122,22 +121,9 @@ export class WebRTCManager extends BrowserEventEmitter {
                 }
             });
 
-            console.log('[WebRTCManager] Host ready, checking if viewer-ready already received...');
-
-            // 4. If viewer-ready was already received, send offer now
-            if (this.viewerReady) {
-                console.log('[WebRTCManager] Viewer was already ready, sending offer now');
-                await this.createAndSendOffer();
-            } else {
-                console.log('[WebRTCManager] Waiting for viewer-ready signal (timeout in 3s)...');
-                // Fallback: if viewer-ready doesn't arrive in 3 seconds, send offer anyway
-                setTimeout(async () => {
-                    if (!this.viewerReady && this.isHost && this.peerConnection && !this.peerConnection.localDescription) {
-                        console.log('[WebRTCManager] Timeout - sending offer without viewer-ready');
-                        await this.createAndSendOffer();
-                    }
-                }, 3000);
-            }
+            // 4. Immediately send offer (simplified - no viewer-ready wait)
+            console.log('[WebRTCManager] Host ready, sending offer immediately...');
+            await this.createAndSendOffer();
 
         } catch (err) {
             console.error('[WebRTCManager] Error starting host:', err);
