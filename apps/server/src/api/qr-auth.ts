@@ -54,12 +54,15 @@ router.post('/generate', (req: Request, res: Response) => {
 
         qrSessions.set(sessionId, session);
 
-        // QR 코드에 포함될 데이터 (세션 ID만 전송)
-        const qrData = JSON.stringify({
-            type: 'lunarview-login',
-            sessionId,
-            expiresAt: expiresAt.toISOString()
-        });
+        // QR 코드에 포함될 데이터 (URL로 변경하여 카메라에서 바로 인식 가능하도록)
+        // const qrData = JSON.stringify({
+        //     type: 'lunarview-login',
+        //     sessionId,
+        //     expiresAt: expiresAt.toISOString()
+        // });
+
+        // 프로덕션 도메인 사용
+        const qrData = `https://lunarview.app/qr-login.html?sessionId=${sessionId}`;
 
         res.json({
             success: true,

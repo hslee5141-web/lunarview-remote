@@ -232,18 +232,36 @@
         let html5QrCode = null;
         let isProcessing = false;
 
-        // 로그인 상태 확인
-        function checkAuth() {
+        // URL에서 세션 ID 확인
+        function getSessionIdFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('sessionId');
+        }
+
+        // 로그인 상태 확인 및 자동 승인 처리
+        async function checkAuth() {
             const accessToken = localStorage.getItem('accessToken');
             const user = localStorage.getItem('user');
+            const urlSessionId = getSessionIdFromUrl();
 
             if (accessToken && user) {
                 document.getElementById('loginRequired').classList.add('hidden');
-                document.getElementById('scannerSection').classList.remove('hidden');
-                initScanner();
+
+                // URL에 세션 ID가 있으면 바로 승인 시도
+                if (urlSessionId) {
+                    showStatus('자동 로그인 승인 중...', 'pending');
+                    await approveSession(urlSessionId);
+                } else {
+                    // 없으면 스캐너 모드
+                    document.getElementById('scannerSection').classList.remove('hidden');
+                    initScanner();
+                }
             } else {
                 document.getElementById('loginRequired').classList.remove('hidden');
                 document.getElementById('scannerSection').classList.add('hidden');
+
+                // 로그인 필요 시 세션 ID 유지하여 리다이렉트 (선택사항)
+                // 만약 로그인 페이지가 별도로 있다면 여기서 처리
             }
         }
 
@@ -272,18 +290,40 @@
             isProcessing = true;
 
             try {
-                const data = JSON.parse(decodedText);
+                let sessionId = null;
 
-                if (data.type === 'lunarview-login' && data.sessionId) {
-                    await approveSession(data.sessionId);
+                // 1. JSON parsing 시도 (기존 방식)
+                try {
+                    const data = JSON.parse(decodedText);
+                    if (data.type === 'lunarview-login' && data.sessionId) {
+                        sessionId = data.sessionId;
+                    }
+                } catch (e) {
+                    // JSON이 아니면 URL로 간주
+                }
+
+                // 2. URL parsing 시도 (새로운 방식)
+                if (!sessionId && decodedText.includes('sessionId=')) {
+                    try {
+                        const url = new URL(decodedText);
+                        sessionId = url.searchParams.get('sessionId');
+                    } catch (e) {
+                        // URL 파싱 실패 시 쿼리 스트링만 확인
+                        const match = decodedText.match(/[?&]sessionId=([^&]+)/);
+                        if (match) sessionId = match[1];
+                    }
+                }
+
+                if (sessionId) {
+                    await approveSession(sessionId);
                 } else {
                     showStatus('유효하지 않은 QR 코드입니다.', 'error');
+                    isProcessing = false;
                 }
             } catch (e) {
                 showStatus('QR 코드를 인식할 수 없습니다.', 'error');
+                isProcessing = false;
             }
-
-            setTimeout(() => { isProcessing = false; }, 3000);
         }
 
         function onScanError(error) {
@@ -326,8 +366,12 @@
                 if (data.success) {
                     showStatus('✓ 로그인이 승인되었습니다! 데스크톱 앱에서 확인하세요.', 'success');
 
-                    // 스캐너 정지
-                    if (html5QrCode) {
+                    // 자동 승인 성공 시 창 닫기 안내 또는 홈으로
+                    if (getSessionIdFromUrl()) {
+                        setTimeout(() => {
+                            window.location.href = './index.html'; // 홈으로 이동
+                        }, 2000);
+                    } else if (html5QrCode) {
                         html5QrCode.stop();
                     }
                 } else {
@@ -335,6 +379,11 @@
                 }
             } catch (error) {
                 showStatus('서버에 연결할 수 없습니다.', 'error');
+            }
+
+            // 재검사 방지 해제 (성공하든 실패하든)
+            if (!getSessionIdFromUrl()) {
+                setTimeout(() => { isProcessing = false; }, 3000);
             }
         }
 
