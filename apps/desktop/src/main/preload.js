@@ -114,6 +114,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
         ipcRenderer.on('oauth-success', handler);
         return () => ipcRenderer.removeListener('oauth-success', handler);
     },
+    setAuthTokens: (data) => ipcRenderer.invoke('set-auth-tokens', data),
 
     // 플랜 제한
     planGetLimits: () => ipcRenderer.invoke('plan-get-limits'),

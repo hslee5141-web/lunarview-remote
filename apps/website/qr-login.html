@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR 코드 스캔 - LunarView</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .logo {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+        }
+
+        .logo svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 32px;
+            font-size: 14px;
+        }
+
+        .scanner-container {
+            background: #1e1e2e;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid #2a2a3e;
+        }
+
+        #reader {
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        #reader video {
+            border-radius: 12px;
+        }
+
+        .status {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .status.success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .status.error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .status.pending {
+            background: rgba(139, 92, 246, 0.2);
+            color: #a78bfa;
+        }
+
+        .manual-input {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #2a2a3e;
+        }
+
+        .manual-input label {
+            display: block;
+            color: #94a3b8;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .manual-input input {
+            flex: 1;
+            padding: 12px 16px;
+            background: #0a0a0f;
+            border: 1px solid #2a2a3e;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .manual-input input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .back-link {
+            margin-top: 24px;
+        }
+
+        .back-link a {
+            color: #8b5cf6;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+
+        .login-required {
+            background: #1e1e2e;
+            border-radius: 16px;
+            padding: 32px;
+            border: 1px solid #2a2a3e;
+        }
+
+        .login-required p {
+            color: #94a3b8;
+            margin-bottom: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+        </div>
+
+        <h1>QR 코드 스캔</h1>
+        <p class="subtitle">데스크톱 앱의 QR 코드를 스캔하여 로그인하세요</p>
+
+        <!-- 로그인 필요 -->
+        <div id="loginRequired" class="login-required hidden">
+            <p>QR 스캔을 사용하려면 먼저 웹에서 로그인해주세요.</p>
+            <a href="./index.html" class="btn">로그인하러 가기</a>
+        </div>
+
+        <!-- 스캐너 -->
+        <div id="scannerSection" class="hidden">
+            <div class="scanner-container">
+                <div id="reader"></div>
+                <div id="status" class="status hidden"></div>
+            </div>
+
+            <div class="manual-input">
+                <label>또는 세션 ID 직접 입력</label>
+                <div class="input-group">
+                    <input type="text" id="sessionInput" placeholder="세션 ID 입력">
+                    <button class="btn" id="approveBtn" onclick="approveManual()">승인</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="back-link">
+            <a href="./index.html">← 홈으로 돌아가기</a>
+        </div>
+    </div>
+
+    <!-- html5-qrcode library -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script>
+        const API_URL = 'https://lunarview-server.onrender.com';
+        let html5QrCode = null;
+        let isProcessing = false;
+
+        // 로그인 상태 확인
+        function checkAuth() {
+            const accessToken = localStorage.getItem('accessToken');
+            const user = localStorage.getItem('user');
+
+            if (accessToken && user) {
+                document.getElementById('loginRequired').classList.add('hidden');
+                document.getElementById('scannerSection').classList.remove('hidden');
+                initScanner();
+            } else {
+                document.getElementById('loginRequired').classList.remove('hidden');
+                document.getElementById('scannerSection').classList.add('hidden');
+            }
+        }
+
+        // QR 스캐너 초기화
+        async function initScanner() {
+            html5QrCode = new Html5Qrcode("reader");
+
+            try {
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    {
+                        fps: 10,
+                        qrbox: { width: 250, height: 250 }
+                    },
+                    onScanSuccess,
+                    onScanError
+                );
+            } catch (err) {
+                showStatus('카메라 접근 권한이 필요합니다. 브라우저 설정에서 허용해주세요.', 'error');
+            }
+        }
+
+        // QR 스캔 성공
+        async function onScanSuccess(decodedText) {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            try {
+                const data = JSON.parse(decodedText);
+
+                if (data.type === 'lunarview-login' && data.sessionId) {
+                    await approveSession(data.sessionId);
+                } else {
+                    showStatus('유효하지 않은 QR 코드입니다.', 'error');
+                }
+            } catch (e) {
+                showStatus('QR 코드를 인식할 수 없습니다.', 'error');
+            }
+
+            setTimeout(() => { isProcessing = false; }, 3000);
+        }
+
+        function onScanError(error) {
+            // 무시 (계속 스캔)
+        }
+
+        // 수동 입력 승인
+        async function approveManual() {
+            const sessionId = document.getElementById('sessionInput').value.trim();
+            if (!sessionId) {
+                showStatus('세션 ID를 입력해주세요.', 'error');
+                return;
+            }
+            await approveSession(sessionId);
+        }
+
+        // 세션 승인 API 호출
+        async function approveSession(sessionId) {
+            const accessToken = localStorage.getItem('accessToken');
+
+            if (!accessToken) {
+                showStatus('로그인이 필요합니다.', 'error');
+                return;
+            }
+
+            showStatus('승인 처리 중...', 'pending');
+
+            try {
+                const response = await fetch(`${API_URL}/api/auth/qr/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({ sessionId })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showStatus('✓ 로그인이 승인되었습니다! 데스크톱 앱에서 확인하세요.', 'success');
+
+                    // 스캐너 정지
+                    if (html5QrCode) {
+                        html5QrCode.stop();
+                    }
+                } else {
+                    showStatus(data.error || '승인에 실패했습니다.', 'error');
+                }
+            } catch (error) {
+                showStatus('서버에 연결할 수 없습니다.', 'error');
+            }
+        }
+
+        // 상태 표시
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            statusEl.classList.remove('hidden');
+        }
+
+        // 페이지 로드 시 실행
+        document.addEventListener('DOMContentLoaded', checkAuth);
+    </script>
+</body>
+
+</html>

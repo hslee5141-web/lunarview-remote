@@ -267,5 +267,13 @@ module.exports = {
         authState.isLoggedIn = true;
         saveAuth();
         return true;
+    },
+    setTokens: (accessToken, refreshToken, user) => {
+        authState.accessToken = accessToken;
+        authState.refreshToken = refreshToken;
+        authState.user = user;
+        authState.isLoggedIn = true;
+        saveAuth();
+        return true;
     }
 };

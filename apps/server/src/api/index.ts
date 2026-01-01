@@ -5,11 +5,15 @@
 import { Router } from 'express';
 import authRouter from './auth';
 import subscriptionRouter from './subscription';
+import qrAuthRouter from './qr-auth';
 
 const apiRouter = Router();
 
 // 인증 API
 apiRouter.use('/auth', authRouter);
+
+// QR 코드 로그인 API
+apiRouter.use('/auth/qr', qrAuthRouter);
 
 // 구독/결제 API
 apiRouter.use('/subscription', subscriptionRouter);

@@ -671,6 +671,20 @@ ipcMain.handle('auth-get-user', async () => {
     return user;
 });
 
+// QR 코드 로그인용 토큰 설정
+ipcMain.handle('set-auth-tokens', async (_, data) => {
+    const { accessToken, refreshToken, user } = data;
+    // desktopAuth에 토큰 설정
+    desktopAuth.setTokens(accessToken, refreshToken, user);
+    if (user) {
+        planRestrictions.setUser(user);
+    }
+    // 렌더러에 알림
+    if (mainWindow) {
+        mainWindow.webContents.send('oauth-success', { accessToken, refreshToken });
+    }
+});
+
 // ===================
 // 플랜 제한 IPC
 // ===================

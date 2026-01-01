@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Icon from './Icon';
+import QRLogin from './QRLogin';
 import '../styles/auth.css';
 
 interface AuthModalProps {
@@ -10,6 +11,7 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModalProps) {
     const [mode, setMode] = useState<'login' | 'register'>('login');
+    const [activeTab, setActiveTab] = useState<'credentials' | 'qr'>('credentials');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
@@ -86,6 +88,11 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
         setError('');
     };
 
+    const handleQRLoginSuccess = (user: any) => {
+        onLoginSuccess(user);
+        onClose();
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -100,103 +107,131 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                         <Icon name="monitor" size={32} />
                     </div>
                     <h2>{mode === 'login' ? '로그인' : '회원가입'}</h2>
-                    <p>{mode === 'login' ? 'LunarView 계정으로 로그인하세요.' : '새 계정을 만들어 시작하세요.'}</p>
                 </div>
 
-                {/* 소셜 로그인 버튼 */}
-                <div className="social-auth">
-                    <button
-                        className="social-btn google"
-                        onClick={() => window.electronAPI.openExternal('https://lunarview-server.onrender.com/api/auth/google')}
-                    >
-                        <div className="social-icon">
-                            <Icon name="google" size={18} />
-                        </div>
-                        <span>Google로 계속하기</span>
-                    </button>
-                    <button
-                        className="social-btn github"
-                        onClick={() => window.electronAPI.openExternal('https://lunarview-server.onrender.com/api/auth/github')}
-                    >
-                        <div className="social-icon">
-                            <Icon name="github" size={18} />
-                        </div>
-                        <span>GitHub로 계속하기</span>
-                    </button>
-                </div>
-
-                <div className="auth-divider">
-                    <span>또는 이메일로</span>
-                </div>
-
-                <form onSubmit={handleSubmit} className="auth-form">
-                    {mode === 'register' && (
-                        <div className="auth-field">
-                            <label>이름</label>
-                            <input
-                                type="text"
-                                value={name}
-                                onChange={e => setName(e.target.value)}
-                                placeholder="홍길동"
-                                required
-                            />
-                        </div>
-                    )}
-
-                    <div className="auth-field">
-                        <label>이메일</label>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={e => setEmail(e.target.value)}
-                            placeholder="example@email.com"
-                            required
-                        />
+                {/* 탭 네비게이션 (로그인 모드에서만 표시) */}
+                {mode === 'login' && (
+                    <div className="auth-tabs">
+                        <button
+                            className={`auth-tab ${activeTab === 'credentials' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('credentials')}
+                        >
+                            <Icon name="mail" size={16} />
+                            <span>이메일/소셜</span>
+                        </button>
+                        <button
+                            className={`auth-tab ${activeTab === 'qr' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('qr')}
+                        >
+                            <Icon name="smartphone" size={16} />
+                            <span>QR 코드</span>
+                        </button>
                     </div>
+                )}
 
-                    <div className="auth-field">
-                        <label>비밀번호</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={e => setPassword(e.target.value)}
-                            placeholder="••••••••"
-                            required
-                        />
-                    </div>
+                {/* QR 로그인 탭 */}
+                {activeTab === 'qr' && mode === 'login' ? (
+                    <QRLogin onLoginSuccess={handleQRLoginSuccess} />
+                ) : (
+                    <>
+                        <p className="auth-subtitle">{mode === 'login' ? 'LunarView 계정으로 로그인하세요.' : '새 계정을 만들어 시작하세요.'}</p>
 
-                    {mode === 'register' && (
-                        <div className="auth-field">
-                            <label>비밀번호 확인</label>
-                            <input
-                                type="password"
-                                value={confirmPassword}
-                                onChange={e => setConfirmPassword(e.target.value)}
-                                placeholder="••••••••"
-                                required
-                            />
+                        {/* 소셜 로그인 버튼 */}
+                        <div className="social-auth">
+                            <button
+                                className="social-btn google"
+                                onClick={() => window.electronAPI.openExternal('https://lunarview-server.onrender.com/api/auth/google')}
+                            >
+                                <div className="social-icon">
+                                    <Icon name="google" size={18} />
+                                </div>
+                                <span>Google로 계속하기</span>
+                            </button>
+                            <button
+                                className="social-btn github"
+                                onClick={() => window.electronAPI.openExternal('https://lunarview-server.onrender.com/api/auth/github')}
+                            >
+                                <div className="social-icon">
+                                    <Icon name="github" size={18} />
+                                </div>
+                                <span>GitHub로 계속하기</span>
+                            </button>
                         </div>
-                    )}
 
-                    {error && <div className="auth-error">{error}</div>}
+                        <div className="auth-divider">
+                            <span>또는 이메일로</span>
+                        </div>
 
-                    <button
-                        type="submit"
-                        className="auth-submit"
-                        disabled={loading}
-                    >
-                        {loading ? '처리 중...' : (mode === 'login' ? '로그인' : '회원가입')}
-                    </button>
-                </form>
+                        <form onSubmit={handleSubmit} className="auth-form">
+                            {mode === 'register' && (
+                                <div className="auth-field">
+                                    <label>이름</label>
+                                    <input
+                                        type="text"
+                                        value={name}
+                                        onChange={e => setName(e.target.value)}
+                                        placeholder="홍길동"
+                                        required
+                                    />
+                                </div>
+                            )}
 
-                <div className="auth-footer">
-                    <span>
-                        {mode === 'login' ? '계정이 없으신가요?' : '이미 계정이 있으신가요?'}
-                    </span>
-                    <button type="button" onClick={switchMode} className="auth-switch">
-                        {mode === 'login' ? '회원가입' : '로그인'}
-                    </button>
-                </div>
+                            <div className="auth-field">
+                                <label>이메일</label>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={e => setEmail(e.target.value)}
+                                    placeholder="example@email.com"
+                                    required
+                                />
+                            </div>
+
+                            <div className="auth-field">
+                                <label>비밀번호</label>
+                                <input
+                                    type="password"
+                                    value={password}
+                                    onChange={e => setPassword(e.target.value)}
+                                    placeholder="••••••••"
+                                    required
+                                />
+                            </div>
+
+                            {mode === 'register' && (
+                                <div className="auth-field">
+                                    <label>비밀번호 확인</label>
+                                    <input
+                                        type="password"
+                                        value={confirmPassword}
+                                        onChange={e => setConfirmPassword(e.target.value)}
+                                        placeholder="••••••••"
+                                        required
+                                    />
+                                </div>
+                            )}
+
+                            {error && <div className="auth-error">{error}</div>}
+
+                            <button
+                                type="submit"
+                                className="auth-submit"
+                                disabled={loading}
+                            >
+                                {loading ? '처리 중...' : (mode === 'login' ? '로그인' : '회원가입')}
+                            </button>
+                        </form>
+
+                        <div className="auth-footer">
+                            <span>
+                                {mode === 'login' ? '계정이 없으신가요?' : '이미 계정이 있으신가요?'}
+                            </span>
+                            <button type="button" onClick={switchMode} className="auth-switch">
+                                {mode === 'login' ? '회원가입' : '로그인'}
+                            </button>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );
