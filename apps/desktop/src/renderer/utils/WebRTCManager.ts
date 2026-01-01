@@ -36,6 +36,7 @@ export class WebRTCManager extends BrowserEventEmitter {
     private localStream: MediaStream | null = null;
     private remoteStream: MediaStream | null = null;
     private isHost: boolean = false;
+    private viewerReady: boolean = false; // Flag for early viewer-ready
     private config: RTCConfiguration = {
         iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },
@@ -66,9 +67,14 @@ export class WebRTCManager extends BrowserEventEmitter {
 
         // Host receives viewer-ready signal and then creates offer
         window.electronAPI.onWebRTCViewerReady?.(async () => {
-            console.log('[WebRTCManager] Viewer is ready, creating offer...');
-            if (this.isHost && this.localStream) {
+            console.log('[WebRTCManager] Received viewer-ready signal');
+            this.viewerReady = true; // Set flag
+            // If Host is already ready (has stream), send offer immediately
+            if (this.isHost && this.localStream && this.peerConnection) {
+                console.log('[WebRTCManager] Host already ready, creating offer now...');
                 await this.createAndSendOffer();
+            } else {
+                console.log('[WebRTCManager] Host not ready yet, offer will be sent when ready');
             }
         });
     }
@@ -77,6 +83,7 @@ export class WebRTCManager extends BrowserEventEmitter {
 
     public async startHost() {
         this.isHost = true;
+        this.viewerReady = false; // Reset flag
         console.log('[WebRTCManager] Starting Host - preparing stream...');
         try {
             // 1. Get Screen Source
@@ -115,8 +122,22 @@ export class WebRTCManager extends BrowserEventEmitter {
                 }
             });
 
-            console.log('[WebRTCManager] Host ready, waiting for viewer-ready signal...');
-            // Offer will be created when viewer-ready signal is received
+            console.log('[WebRTCManager] Host ready, checking if viewer-ready already received...');
+
+            // 4. If viewer-ready was already received, send offer now
+            if (this.viewerReady) {
+                console.log('[WebRTCManager] Viewer was already ready, sending offer now');
+                await this.createAndSendOffer();
+            } else {
+                console.log('[WebRTCManager] Waiting for viewer-ready signal (timeout in 3s)...');
+                // Fallback: if viewer-ready doesn't arrive in 3 seconds, send offer anyway
+                setTimeout(async () => {
+                    if (!this.viewerReady && this.isHost && this.peerConnection && !this.peerConnection.localDescription) {
+                        console.log('[WebRTCManager] Timeout - sending offer without viewer-ready');
+                        await this.createAndSendOffer();
+                    }
+                }, 3000);
+            }
 
         } catch (err) {
             console.error('[WebRTCManager] Error starting host:', err);
