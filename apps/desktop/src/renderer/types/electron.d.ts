@@ -47,6 +47,10 @@ export interface ElectronAPI {
     onWebRTCAnswer: (callback: (data: { answer: RTCSessionDescriptionInit }) => void) => (() => void) | void;
     onWebRTCIceCandidate: (callback: (data: { candidate: RTCIceCandidateInit }) => void) => (() => void) | void;
 
+    // WebRTC Viewer Ready Signal
+    sendWebRTCViewerReady: () => void;
+    onWebRTCViewerReady: (callback: () => void) => (() => void) | void;
+
     // 게임 모드 & 품질
     setGameMode: (enabled: boolean) => Promise<void>;
     getGameMode: () => Promise<boolean>;

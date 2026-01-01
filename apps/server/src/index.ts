@@ -388,6 +388,7 @@ function handleMessage(clientId: string, ws: WebSocket, message: any, ipAddress:
         case 'webrtc-offer':
         case 'webrtc-answer':
         case 'webrtc-ice-candidate':
+        case 'webrtc-viewer-ready':
             handleWebRTCSignaling(clientId, message);
             break;
         case 'relay':

@@ -93,6 +93,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
         return () => ipcRenderer.removeListener('webrtc-ice-candidate', handler);
     },
 
+    // WebRTC Viewer Ready Signal
+    sendWebRTCViewerReady: () => ipcRenderer.send('webrtc-viewer-ready'),
+    onWebRTCViewerReady: (callback) => {
+        const handler = () => callback();
+        ipcRenderer.on('webrtc-viewer-ready', handler);
+        return () => ipcRenderer.removeListener('webrtc-viewer-ready', handler);
+    },
+
     // 게임 모드 & 품질
     setGameMode: (enabled) => ipcRenderer.invoke('set-game-mode', enabled),
     getGameMode: () => ipcRenderer.invoke('get-game-mode'),

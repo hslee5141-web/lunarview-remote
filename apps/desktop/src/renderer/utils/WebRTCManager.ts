@@ -1,6 +1,37 @@
-import { EventEmitter } from 'events';
+// Browser-compatible EventEmitter (replaces Node.js 'events' module)
+type EventCallback = (...args: any[]) => void;
 
-export class WebRTCManager extends EventEmitter {
+class BrowserEventEmitter {
+    private events: Map<string, EventCallback[]> = new Map();
+
+    on(event: string, callback: EventCallback): this {
+        if (!this.events.has(event)) {
+            this.events.set(event, []);
+        }
+        this.events.get(event)!.push(callback);
+        return this;
+    }
+
+    emit(event: string, ...args: any[]): boolean {
+        const callbacks = this.events.get(event);
+        if (callbacks) {
+            callbacks.forEach(cb => cb(...args));
+            return true;
+        }
+        return false;
+    }
+
+    removeAllListeners(event?: string): this {
+        if (event) {
+            this.events.delete(event);
+        } else {
+            this.events.clear();
+        }
+        return this;
+    }
+}
+
+export class WebRTCManager extends BrowserEventEmitter {
     private peerConnection: RTCPeerConnection | null = null;
     private localStream: MediaStream | null = null;
     private remoteStream: MediaStream | null = null;
@@ -32,13 +63,21 @@ export class WebRTCManager extends EventEmitter {
         window.electronAPI.onWebRTCIceCandidate(async (data: { candidate: RTCIceCandidateInit }) => {
             await this.handleIceCandidate(data.candidate);
         });
+
+        // Host receives viewer-ready signal and then creates offer
+        window.electronAPI.onWebRTCViewerReady?.(async () => {
+            console.log('[WebRTCManager] Viewer is ready, creating offer...');
+            if (this.isHost && this.localStream) {
+                await this.createAndSendOffer();
+            }
+        });
     }
 
     // --- Host Methods ---
 
     public async startHost() {
         this.isHost = true;
-        console.log('[WebRTCManager] Starting Host...');
+        console.log('[WebRTCManager] Starting Host - preparing stream...');
         try {
             // 1. Get Screen Source
             const sources = await window.electronAPI.getScreens();
@@ -68,23 +107,16 @@ export class WebRTCManager extends EventEmitter {
             this.localStream = stream;
             this.emit('local-stream', stream);
 
-            // 3. Create PeerConnection
+            // 3. Create PeerConnection and add tracks (but don't send offer yet)
             this.createPeerConnection();
-
-            // 4. Add Tracks
             stream.getTracks().forEach(track => {
                 if (this.peerConnection) {
                     this.peerConnection.addTrack(track, stream);
                 }
             });
 
-            // 5. Create Offer
-            const offer = await this.peerConnection!.createOffer();
-            await this.peerConnection!.setLocalDescription(offer);
-
-            // 6. Send Offer via Main process
-            window.electronAPI.sendWebRTCOffer(offer);
-            console.log('[WebRTCManager] Offer sent');
+            console.log('[WebRTCManager] Host ready, waiting for viewer-ready signal...');
+            // Offer will be created when viewer-ready signal is received
 
         } catch (err) {
             console.error('[WebRTCManager] Error starting host:', err);
@@ -92,12 +124,30 @@ export class WebRTCManager extends EventEmitter {
         }
     }
 
+    private async createAndSendOffer() {
+        if (!this.peerConnection) {
+            console.error('[WebRTCManager] No peer connection when trying to create offer');
+            return;
+        }
+        try {
+            const offer = await this.peerConnection.createOffer();
+            await this.peerConnection.setLocalDescription(offer);
+            window.electronAPI.sendWebRTCOffer(offer);
+            console.log('[WebRTCManager] Offer sent');
+        } catch (err) {
+            console.error('[WebRTCManager] Error creating offer:', err);
+        }
+    }
+
     // --- Viewer Methods ---
 
     public async startViewer() {
         this.isHost = false;
-        console.log('[WebRTCManager] Starting Viewer...');
-        // Viewer waits for Offer
+        console.log('[WebRTCManager] Starting Viewer, sending viewer-ready signal...');
+        // Create peer connection first so we're ready to receive offer
+        this.createPeerConnection();
+        // Send viewer-ready signal to Host
+        window.electronAPI.sendWebRTCViewerReady?.();
     }
 
     // --- Common WebRTC Logic ---

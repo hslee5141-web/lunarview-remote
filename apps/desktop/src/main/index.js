@@ -96,7 +96,7 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
-            devTools: false,
+            devTools: true, // Enabled for debugging
             preload: path.join(__dirname, 'preload.js'),
         },
     });
@@ -106,17 +106,19 @@ function createWindow() {
         state.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
     } else {
         state.mainWindow.loadURL('http://localhost:5173');
-        // state.mainWindow.webContents.openDevTools();
+        state.mainWindow.webContents.openDevTools(); // Open DevTools for debugging
     }
 
     state.mainWindow.once('ready-to-show', () => {
         state.mainWindow.show();
-        // 개발자 도구 강제 종료 (지연 실행으로 초기화 시점의 자동 열림 방지)
+        // DevTools auto-close disabled for debugging
+        /*
         setTimeout(() => {
             if (state.mainWindow && !state.mainWindow.isDestroyed()) {
                 state.mainWindow.webContents.closeDevTools();
             }
         }, 500);
+        */
     });
 
     state.mainWindow.on('closed', () => {
@@ -277,6 +279,11 @@ function handleServerMessage(message) {
             sendToRenderer('webrtc-ice-candidate', message);
             break;
 
+        case 'webrtc-viewer-ready':
+            console.log('[Main] Received viewer-ready from server, forwarding to Renderer');
+            sendToRenderer('webrtc-viewer-ready');
+            break;
+
         case 'pong':
             break;
     }
@@ -304,7 +311,7 @@ function startSession() {
 function stopSession() {
     state.sessionActive = false;
     state.connectedPeerId = null;
-    screenCapture.stopCapture(); // 혹시 모를 정리
+    // screenCapture.stopCapture(); // Removed - capture now in Renderer
     clipboardSync.stopSync();
 }
 
@@ -432,6 +439,12 @@ ipcMain.on('webrtc-answer', (_, answer) => {
 
 ipcMain.on('webrtc-ice-candidate', (_, candidate) => {
     sendToServer({ type: 'webrtc-ice-candidate', candidate });
+});
+
+// WebRTC Viewer Ready (Viewer -> Server -> Host)
+ipcMain.on('webrtc-viewer-ready', () => {
+    console.log('[Main] Sending viewer-ready signal to server');
+    sendToServer({ type: 'webrtc-viewer-ready' });
 });
 
 ipcMain.handle('select-file', async () => {
