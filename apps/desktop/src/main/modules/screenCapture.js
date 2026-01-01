@@ -15,19 +15,20 @@ let lastFrameSize = 0;
 let autoQualityEnabled = true;
 
 // 품질 프리셋
+// 품질 프리셋 (FPS 상향 조정)
 const qualitySettings = {
-    low: { width: 854, height: 480, fps: 10, jpeg: 40 },
-    medium: { width: 1280, height: 720, fps: 15, jpeg: 60 },
-    high: { width: 1920, height: 1080, fps: 25, jpeg: 80 },
+    low: { width: 854, height: 480, fps: 20, jpeg: 50 },     // 10 -> 20 FPS
+    medium: { width: 1280, height: 720, fps: 30, jpeg: 60 }, // 15 -> 30 FPS
+    high: { width: 1920, height: 1080, fps: 60, jpeg: 80 },  // 25 -> 60 FPS
     game: { width: 1920, height: 1080, fps: 60, jpeg: 70 },
-    gamelow: { width: 1280, height: 720, fps: 60, jpeg: 50 },
+    gamelow: { width: 1280, height: 720, fps: 60, jpeg: 60 },
 };
 
-// 자동 품질 조절 임계값
+// 자동 품질 조절 임계값 (최신 네트워크 환경에 맞게 완화)
 const AUTO_QUALITY_THRESHOLDS = {
-    highToMedium: 200 * 1024,  // 200KB 이상이면 품질 낮춤
-    mediumToLow: 300 * 1024,   // 300KB 이상이면 더 낮춤
-    lowToMedium: 50 * 1024,    // 50KB 이하면 품질 높임
+    highToMedium: 500 * 1024,  // 200KB -> 500KB
+    mediumToLow: 800 * 1024,   // 300KB -> 800KB
+    lowToMedium: 150 * 1024,   // 50KB -> 150KB
 };
 
 let onFrameCallback = null;
