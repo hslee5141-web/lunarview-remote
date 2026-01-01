@@ -250,7 +250,7 @@
 </head>
 
 <body>
-    <!-- Admin Login -->
+    <!-- Admin Login Required -->
     <div id="adminLogin" class="admin-login">
         <div class="admin-login-box">
             <div class="admin-badge" style="margin: 0 auto 24px; width: fit-content;">
@@ -259,15 +259,12 @@
                 </svg>
                 관리자 전용
             </div>
-            <h1 class="admin-login-title">관리자 로그인</h1>
-            <p class="admin-login-subtitle">LunarView 관리자 패널에 접근하려면 API 키가 필요합니다.</p>
-            <form id="adminLoginForm">
-                <div class="form-group">
-                    <label for="apiKey">API 키</label>
-                    <input type="password" id="apiKey" placeholder="관리자 API 키 입력" required>
-                </div>
-                <button type="submit" class="btn btn-primary btn-full" style="margin-top: 16px;">로그인</button>
-            </form>
+            <h1 class="admin-login-title">관리자 로그인 필요</h1>
+            <p class="admin-login-subtitle">관리자 패널에 접근하려면 관리자 계정으로 로그인해야 합니다.</p>
+            <a href="/login.html?redirect=/admin.html" class="btn btn-primary btn-full"
+                style="margin-top: 16px; display: block; text-align: center; text-decoration: none;">
+                로그인 페이지로 이동
+            </a>
             <p style="text-align: center; margin-top: 24px; font-size: 13px; color: var(--text-muted);">
                 <a href="/">← 홈으로 돌아가기</a>
             </p>
