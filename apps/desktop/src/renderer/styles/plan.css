@@ -415,3 +415,11 @@
     line-height: 1.5;
     max-width: 320px;
 }
+
+/* Small Plan Badge for User Menu Button */
+.plan-badge.small {
+    padding: 2px 8px;
+    font-size: 10px;
+    margin-left: 4px;
+    white-space: nowrap;
+}

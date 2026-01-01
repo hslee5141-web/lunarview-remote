@@ -117,6 +117,27 @@ function updateNavUI() {
             if (userAvatar && user.name) {
                 userAvatar.textContent = user.name.charAt(0).toUpperCase();
             }
+
+            // 플랜 뱃지 표시
+            const userPlanBadgeNav = document.getElementById('userPlanBadgeNav');
+            if (userPlanBadgeNav && user.plan) {
+                let planText = '무료';
+                let planClass = 'free';
+
+                if (user.trial && user.trial.isActive) {
+                    planText = '체험중';
+                    planClass = 'pro';
+                } else if (user.plan !== 'free') {
+                    planText = 'PRO';
+                    planClass = 'pro';
+                }
+
+                userPlanBadgeNav.textContent = planText;
+                userPlanBadgeNav.className = 'nav-plan-badge ' + planClass;
+                userPlanBadgeNav.style.display = 'inline-block';
+            } else if (userPlanBadgeNav) {
+                userPlanBadgeNav.style.display = 'none';
+            }
         }
     } else {
         navGuest.style.display = 'flex';

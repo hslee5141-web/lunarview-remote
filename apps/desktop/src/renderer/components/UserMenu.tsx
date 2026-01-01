@@ -42,6 +42,9 @@ export default function UserMenu({ user, onLogin, onLogout }: UserMenuProps) {
                     {user.name.charAt(0).toUpperCase()}
                 </div>
                 <span className="user-name">{user.name}</span>
+                <span className={`plan-badge small ${user.trial?.isActive ? 'personal_pro' : user.plan}`}>
+                    {user.trial?.isActive ? '체험중' : (user.plan === 'free' ? '무료' : 'PRO')}
+                </span>
                 <Icon name="chevronDown" size={12} />
             </button>
 
