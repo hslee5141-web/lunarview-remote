@@ -9,6 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize live stats animation
     initLiveStats();
 
+    // Fetch latest version from GitHub
+    fetchLatestVersion();
+
     // Mobile Menu Toggle
     const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
     const navLinks = document.querySelector('.nav-links');
@@ -242,3 +245,42 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// GitHub Release Automation
+function fetchLatestVersion() {
+    const REPO = 'hslee5141-web/lunarview-remote';
+    const API_URL = `https://api.github.com/repos/${REPO}/releases/latest`;
+
+    fetch(API_URL)
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(data => {
+            const version = data.tag_name; // e.g., v1.1.0
+            const versionClean = version.replace('v', ''); // 1.1.0
+            const downloadUrl = `https://github.com/${REPO}/releases/download/${version}/LunarView.Setup.${versionClean}.exe`;
+
+            // Update Windows elements
+            const winVersionEl = document.getElementById('win-version');
+            const winDownloadEl = document.getElementById('win-download');
+
+            if (winVersionEl) {
+                winVersionEl.textContent = `버전 ${versionClean} | 80MB`;
+            }
+            if (winDownloadEl) {
+                winDownloadEl.href = downloadUrl;
+            }
+
+            // Update All Versions link
+            const allVersionsEls = document.querySelectorAll('.all-versions-link');
+            allVersionsEls.forEach(el => {
+                el.href = `https://github.com/${REPO}/releases/tag/${version}`;
+            });
+
+            console.log(`Updated download links to ${version}`);
+        })
+        .catch(error => {
+            console.error('Failed to fetch latest version:', error);
+        });
+}
