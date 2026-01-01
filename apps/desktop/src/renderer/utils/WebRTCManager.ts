@@ -51,14 +51,20 @@ export class WebRTCManager extends BrowserEventEmitter {
 
     private setupSignalingListeners() {
         // Main process triggers these when receiving from signaling server
-        window.electronAPI.onWebRTCOffer(async (data: { offer: RTCSessionDescriptionInit }) => {
-            console.log('[WebRTCManager] Received offer');
-            await this.handleOffer(data.offer);
+        window.electronAPI.onWebRTCOffer(async (data: any) => {
+            console.log('[WebRTCManager] Received offer data:', JSON.stringify(data, null, 2));
+            // Handle different message structures (server sends {type: 'webrtc-offer', offer: {...}})
+            const offer = data.offer || data;
+            console.log('[WebRTCManager] Extracted offer:', JSON.stringify(offer, null, 2));
+            await this.handleOffer(offer);
         });
 
-        window.electronAPI.onWebRTCAnswer(async (data: { answer: RTCSessionDescriptionInit }) => {
-            console.log('[WebRTCManager] Received answer');
-            await this.handleAnswer(data.answer);
+        window.electronAPI.onWebRTCAnswer(async (data: any) => {
+            console.log('[WebRTCManager] Received answer data:', JSON.stringify(data, null, 2));
+            // Handle different message structures
+            const answer = data.answer || data;
+            console.log('[WebRTCManager] Extracted answer:', JSON.stringify(answer, null, 2));
+            await this.handleAnswer(answer);
         });
 
         window.electronAPI.onWebRTCIceCandidate(async (data: { candidate: RTCIceCandidateInit }) => {
@@ -139,7 +145,8 @@ export class WebRTCManager extends BrowserEventEmitter {
         try {
             const offer = await this.peerConnection.createOffer();
             await this.peerConnection.setLocalDescription(offer);
-            window.electronAPI.sendWebRTCOffer(offer);
+            // Explicitly serialize as plain object for IPC transfer
+            window.electronAPI.sendWebRTCOffer({ type: offer.type, sdp: offer.sdp });
             console.log('[WebRTCManager] Offer sent');
         } catch (err) {
             console.error('[WebRTCManager] Error creating offer:', err);
@@ -193,8 +200,8 @@ export class WebRTCManager extends BrowserEventEmitter {
 
             const answer = await this.peerConnection!.createAnswer();
             await this.peerConnection!.setLocalDescription(answer);
-
-            window.electronAPI.sendWebRTCAnswer(answer);
+            // Explicitly serialize as plain object for IPC transfer
+            window.electronAPI.sendWebRTCAnswer({ type: answer.type, sdp: answer.sdp });
             console.log('[WebRTCManager] Answer sent');
         } catch (err) {
             console.error('[WebRTCManager] Error handling offer:', err);
