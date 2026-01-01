@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import Icon from './Icon';
-import QRLogin from './QRLogin';
 import '../styles/auth.css';
+
+// QRLogin을 지연 로드하여 초기 렌더링 문제 방지
+const QRLogin = lazy(() => import('./QRLogin'));
 
 interface AuthModalProps {
     isOpen: boolean;
@@ -131,7 +133,9 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
 
                 {/* QR 로그인 탭 */}
                 {activeTab === 'qr' && mode === 'login' ? (
-                    <QRLogin onLoginSuccess={handleQRLoginSuccess} />
+                    <Suspense fallback={<div className="qr-loading"><div className="spinner"></div><span>로딩 중...</span></div>}>
+                        <QRLogin onLoginSuccess={handleQRLoginSuccess} />
+                    </Suspense>
                 ) : (
                     <>
                         <p className="auth-subtitle">{mode === 'login' ? 'LunarView 계정으로 로그인하세요.' : '새 계정을 만들어 시작하세요.'}</p>
