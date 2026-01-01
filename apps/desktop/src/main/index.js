@@ -7,8 +7,12 @@ const { app, BrowserWindow, ipcMain, desktopCapturer, screen, dialog, shell } = 
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-// 하드웨어 가속 비활성화 (블랙 스크린 문제 해결)
-// app.disableHardwareAcceleration(); // 60fps 성능을 위해 다시 활성화 (게임 모드)
+// 하드웨어 가속 및 성능 최적화
+// app.disableHardwareAcceleration(); // 60fps 성능을 위해 다시 활성화
+app.commandLine.appendSwitch('disable-background-timer-throttling');
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
+app.commandLine.appendSwitch('enable-features', 'WebRTCPipeWireCapturer'); // Linux support if needed
 
 // 모듈 로드
 const WebSocket = require('ws');

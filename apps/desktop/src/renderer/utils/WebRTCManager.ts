@@ -59,7 +59,7 @@ export class WebRTCManager extends EventEmitter {
                         maxWidth: 1920,
                         minHeight: 720,
                         maxHeight: 1080,
-                        minFrameRate: 30,
+                        minFrameRate: 60,
                         maxFrameRate: 60
                     }
                 } as any
