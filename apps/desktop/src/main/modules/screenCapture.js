@@ -58,11 +58,17 @@ function restartCaptureLoop() {
     const settings = qualitySettings[quality];
     const interval = 1000 / settings.fps;
 
+    let isCapturingFrame = false;
+
     captureInterval = setInterval(async () => {
         if (!isActiveCallback || !isActiveCallback()) {
             stopCapture();
             return;
         }
+
+        // 이전 프레임 처리가 아직 안 끝났으면 스킵 (Backpressure 방지)
+        if (isCapturingFrame) return;
+        isCapturingFrame = true;
 
         try {
             const quality = isGameMode ? (lastFrameSize > AUTO_QUALITY_THRESHOLDS.highToMedium ? 'gamelow' : 'game') : currentQuality;
@@ -97,6 +103,8 @@ function restartCaptureLoop() {
             }
         } catch (error) {
             console.error('[ScreenCapture] Error:', error);
+        } finally {
+            isCapturingFrame = false;
         }
     }, interval);
 }

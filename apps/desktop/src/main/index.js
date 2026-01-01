@@ -7,9 +7,8 @@ const { app, BrowserWindow, ipcMain, desktopCapturer, screen, dialog, shell } = 
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-
 // 하드웨어 가속 비활성화 (블랙 스크린 문제 해결)
-app.disableHardwareAcceleration();
+// app.disableHardwareAcceleration(); // 60fps 성능을 위해 다시 활성화 (게임 모드)
 
 // 모듈 로드
 const WebSocket = require('ws');
