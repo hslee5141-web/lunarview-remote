@@ -8,11 +8,24 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 // 하드웨어 가속 및 성능 최적화
-// app.disableHardwareAcceleration(); // 60fps 성능을 위해 다시 활성화
+// app.disableHardwareAcceleration(); // 비활성화하면 안됨! GPU 가속 필요
 app.commandLine.appendSwitch('disable-background-timer-throttling');
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
 app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
-app.commandLine.appendSwitch('enable-features', 'WebRTCPipeWireCapturer'); // Linux support if needed
+app.commandLine.appendSwitch('enable-features', 'WebRTCPipeWireCapturer'); // Linux support
+
+// H.264 하드웨어 인코딩 최적화 플래그
+app.commandLine.appendSwitch('enable-accelerated-video-decode'); // 하드웨어 비디오 디코딩
+app.commandLine.appendSwitch('enable-accelerated-video-encode'); // 하드웨어 비디오 인코딩
+app.commandLine.appendSwitch('enable-gpu-rasterization');        // GPU 래스터화
+app.commandLine.appendSwitch('enable-zero-copy');                // 제로 카피 (메모리 최적화)
+app.commandLine.appendSwitch('ignore-gpu-blocklist');            // GPU 블록리스트 무시
+
+// 개발 모드에서 다른 userData 경로 사용 (캐시 충돌 방지)
+if (!app.isPackaged) {
+    app.setPath('userData', path.join(app.getPath('userData'), 'dev'));
+}
+
 
 // 모듈 로드
 const WebSocket = require('ws');
@@ -68,8 +81,15 @@ function generatePassword() {
 }
 
 function sendToRenderer(channel, data) {
-    if (state.mainWindow && !state.mainWindow.isDestroyed()) {
-        state.mainWindow.webContents.send(channel, data);
+    // mainWindow와 webContents가 모두 살아있는지 확인
+    if (state.mainWindow && !state.mainWindow.isDestroyed() &&
+        state.mainWindow.webContents && !state.mainWindow.webContents.isDestroyed()) {
+        try {
+            state.mainWindow.webContents.send(channel, data);
+        } catch (e) {
+            // 렌더러가 비정상 종료된 경우 로그만 남기고 무시 (앱 크래시 방지)
+            console.log(`[Main] Failed to send ${channel} (renderer might be gone):`, e.message);
+        }
     }
 }
 
@@ -101,12 +121,17 @@ function createWindow() {
         },
     });
 
-    // 패키징된 앱인지 확인 (app.isPackaged 사용)
-    if (app.isPackaged) {
-        state.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
-    } else {
+    // 패키징된 앱이거나, npm start로 실행된 경우 (프로덕션 빌드 테스트)
+    const isDev = process.env.npm_lifecycle_event === 'dev:electron' || process.env.npm_lifecycle_event === 'dev';
+
+    // 개발 모드이고 패키징되지 않았을 때만 localhost 연결
+    if (!app.isPackaged && isDev) {
         state.mainWindow.loadURL('http://localhost:5173');
-        state.mainWindow.webContents.openDevTools(); // Open DevTools for debugging
+        state.mainWindow.webContents.openDevTools();
+    } else {
+        // 그 외(빌드된 앱 테스트 또는 패키징된 앱)는 파일 로드
+        // dist/main/index.js 기준 ../renderer/index.html
+        state.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
     }
 
     state.mainWindow.once('ready-to-show', () => {
@@ -119,6 +144,26 @@ function createWindow() {
             }
         }, 500);
         */
+    });
+
+    // 창 이동 시 디스플레이 변경 감지
+    let lastDisplayId = null;
+    state.mainWindow.on('move', () => {
+        if (!state.mainWindow || state.mainWindow.isDestroyed()) return;
+        const bounds = state.mainWindow.getBounds();
+        const currentDisplay = screen.getDisplayNearestPoint({
+            x: bounds.x + bounds.width / 2,
+            y: bounds.y + bounds.height / 2
+        });
+
+        if (lastDisplayId !== null && lastDisplayId !== currentDisplay.id) {
+            console.log('[Main] Window moved to different display:', currentDisplay.id);
+            sendToRenderer('display-changed', {
+                id: currentDisplay.id,
+                bounds: currentDisplay.bounds
+            });
+        }
+        lastDisplayId = currentDisplay.id;
     });
 
     state.mainWindow.on('closed', () => {
@@ -266,13 +311,15 @@ function handleServerMessage(message) {
             sendToRenderer('session-ended', { reason: message.reason });
             break;
 
-        // WebRTC 시그널링 (Renderer로 전달)
+        // WebRTC 시그널링 처리
         case 'webrtc-offer':
-            sendToRenderer('webrtc-offer', message);
+            // RTCSessionDescription을 위해 type을 'offer'로 명시
+            sendToRenderer('webrtc-offer', { type: 'offer', sdp: message.sdp });
             break;
 
         case 'webrtc-answer':
-            sendToRenderer('webrtc-answer', message);
+            // RTCSessionDescription을 위해 type을 'answer'로 명시
+            sendToRenderer('webrtc-answer', { type: 'answer', sdp: message.sdp });
             break;
 
         case 'webrtc-ice-candidate':
@@ -288,6 +335,54 @@ function handleServerMessage(message) {
             break;
     }
 }
+
+// ===================
+// WebRTC Signaling IPC Handlers
+// ===================
+ipcMain.on('webrtc-viewer-ready', () => {
+    if (state.connectedPeerId) {
+        console.log('[Main] Sending viewer-ready signal to:', state.connectedPeerId);
+        sendToServer({
+            type: 'webrtc-viewer-ready',
+            targetId: state.connectedPeerId
+        });
+    }
+});
+
+ipcMain.on('webrtc-offer', (_, offer) => {
+    if (state.connectedPeerId) {
+        console.log('[Main] Sending Offer to:', state.connectedPeerId);
+        sendToServer({
+            type: 'webrtc-offer',
+            targetId: state.connectedPeerId,
+            sdp: offer.sdp
+            // offer.type은 'offer'이지만 메시지 타입은 'webrtc-offer'로 보냄
+        });
+    }
+});
+
+ipcMain.on('webrtc-answer', (_, answer) => {
+    if (state.connectedPeerId) {
+        console.log('[Main] Sending Answer to:', state.connectedPeerId);
+        sendToServer({
+            type: 'webrtc-answer',
+            targetId: state.connectedPeerId,
+            sdp: answer.sdp
+        });
+    }
+});
+
+ipcMain.on('webrtc-ice-candidate', (_, candidate) => {
+    if (state.connectedPeerId) {
+        sendToServer({
+            type: 'webrtc-ice-candidate',
+            targetId: state.connectedPeerId,
+            candidate: candidate.candidate,
+            sdpMid: candidate.sdpMid,
+            sdpMLineIndex: candidate.sdpMLineIndex
+        });
+    }
+});
 
 // ===================
 // 세션 관리 (Relay Mode for WebRTC)
@@ -416,6 +511,39 @@ ipcMain.handle('disconnect', () => {
     return true;
 });
 
+// 현재 디스플레이 정보 반환 (화면 공유 시 사용)
+ipcMain.handle('get-current-display', () => {
+    const cursorPoint = screen.getCursorScreenPoint();
+    const currentDisplay = screen.getDisplayNearestPoint(cursorPoint);
+    return {
+        id: currentDisplay.id.toString(),
+        label: currentDisplay.label,
+        bounds: currentDisplay.bounds
+    };
+});
+
+// 화면 목록 반환 (WebRTC 캡처 소스용)
+ipcMain.handle('get-screens', async () => {
+    try {
+        const sources = await desktopCapturer.getSources({
+            types: ['screen']
+            // 썸네일 생성 부하 방지 및 IPC 메시지 최적화를 위해 thumbnailSize 옵션 제외
+            // 및 반환 객체에서 thumbnail 제외
+        });
+
+        const safeSources = sources.map(source => ({
+            id: source.id,
+            name: source.name
+        }));
+
+        // IPC 직렬화 안전성을 위해 순수 JSON 객체로 변환
+        return JSON.parse(JSON.stringify(safeSources));
+    } catch (e) {
+        console.error('[Main] Failed to get screens:', e);
+        return [];
+    }
+});
+
 ipcMain.on('mouse-event', (_, event) => {
     if (state.sessionActive) {
         sendToServer({ type: 'mouse-event', event });
@@ -426,25 +554,6 @@ ipcMain.on('keyboard-event', (_, event) => {
     if (state.sessionActive) {
         sendToServer({ type: 'keyboard-event', event });
     }
-});
-
-// WebRTC 시그널링 (Renderer -> Server)
-ipcMain.on('webrtc-offer', (_, offer) => {
-    sendToServer({ type: 'webrtc-offer', offer });
-});
-
-ipcMain.on('webrtc-answer', (_, answer) => {
-    sendToServer({ type: 'webrtc-answer', answer });
-});
-
-ipcMain.on('webrtc-ice-candidate', (_, candidate) => {
-    sendToServer({ type: 'webrtc-ice-candidate', candidate });
-});
-
-// WebRTC Viewer Ready (Viewer -> Server -> Host)
-ipcMain.on('webrtc-viewer-ready', () => {
-    console.log('[Main] Sending viewer-ready signal to server');
-    sendToServer({ type: 'webrtc-viewer-ready' });
 });
 
 ipcMain.handle('select-file', async () => {
@@ -462,17 +571,6 @@ ipcMain.handle('send-file', async (_, filePath) => {
     );
 });
 
-ipcMain.handle('get-screens', async () => {
-    const sources = await desktopCapturer.getSources({ types: ['screen'] });
-    const displays = screen.getAllDisplays();
-    return sources.map((source, i) => ({
-        id: source.id,
-        name: source.name,
-        width: displays[i]?.size.width || 0,
-        height: displays[i]?.size.height || 0,
-    }));
-});
-
 // Deprecated IPC handlers (Moved to Renderer)
 ipcMain.handle('set-quality', () => true);
 ipcMain.handle('set-game-mode', () => true);
@@ -480,6 +578,45 @@ ipcMain.handle('get-game-mode', () => false);
 
 ipcMain.handle('get-capture-stats', () => ({ fps: 60, bandwidth: 0 }));
 ipcMain.handle('set-auto-quality', () => true);
+
+// 설정 IPC 핸들러
+ipcMain.handle('set-framerate', (_, fps) => {
+    state.framerate = fps;
+    console.log('[Settings] Framerate set to:', fps);
+    return true;
+});
+
+ipcMain.handle('set-audio-enabled', (_, enabled) => {
+    state.audioEnabled = enabled;
+    console.log('[Settings] Audio enabled:', enabled);
+    return true;
+});
+
+ipcMain.handle('set-session-timeout', (_, minutes) => {
+    state.sessionTimeout = minutes;
+    console.log('[Settings] Session timeout set to:', minutes, 'minutes');
+    return true;
+});
+
+ipcMain.handle('set-auto-launch', async (_, enabled) => {
+    try {
+        app.setLoginItemSettings({
+            openAtLogin: enabled,
+            openAsHidden: true
+        });
+        console.log('[Settings] Auto launch set to:', enabled);
+        return true;
+    } catch (e) {
+        console.error('[Settings] Failed to set auto launch:', e);
+        return false;
+    }
+});
+
+ipcMain.handle('set-notification-settings', (_, settings) => {
+    state.notificationSettings = settings;
+    console.log('[Settings] Notification settings:', settings);
+    return true;
+});
 
 // ===================
 // 단축키 관리
@@ -737,7 +874,17 @@ if (process.defaultApp) {
     app.setAsDefaultProtocolClient('lunarview');
 }
 
-const gotTheLock = app.requestSingleInstanceLock();
+// 단일 인스턴스 락 확인
+const additionalData = { myKey: 'myValue' };
+let gotTheLock = app.requestSingleInstanceLock(additionalData);
+
+if (!gotTheLock && !app.isPackaged) {
+    // 개발 모드에서 중복 실행 시 캐시 충돌 방지를 위해 별도 경로 사용
+    const dev2Path = path.join(app.getPath('userData'), '../dev-2');
+    console.log('[Main] Running as second instance in dev mode. Using path:', dev2Path);
+    app.setPath('userData', dev2Path);
+    gotTheLock = true; // 실행 허용
+}
 
 if (!gotTheLock) {
     app.quit();

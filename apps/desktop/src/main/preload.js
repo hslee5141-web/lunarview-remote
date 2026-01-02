@@ -16,6 +16,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     startScreenCapture: () => ipcRenderer.invoke('start-screen-capture'),
     stopScreenCapture: () => ipcRenderer.invoke('stop-screen-capture'),
     getScreens: () => ipcRenderer.invoke('get-screens'),
+    setSelectedScreen: (screenId) => ipcRenderer.invoke('set-selected-screen', screenId),
+    getCurrentDisplay: () => ipcRenderer.invoke('get-current-display'),
+    onDisplayChanged: (callback) => {
+        const handler = (_, data) => callback(data);
+        ipcRenderer.on('display-changed', handler);
+        return () => ipcRenderer.removeListener('display-changed', handler);
+    },
 
     // 입력 제어
     sendMouseEvent: (event) => ipcRenderer.send('mouse-event', event),
@@ -107,6 +114,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     setQuality: (quality) => ipcRenderer.invoke('set-quality', quality),
     setAutoQuality: (enabled) => ipcRenderer.invoke('set-auto-quality', enabled),
     getCaptureStats: () => ipcRenderer.invoke('get-capture-stats'),
+    setFramerate: (fps) => ipcRenderer.invoke('set-framerate', fps),
+    setAudioEnabled: (enabled) => ipcRenderer.invoke('set-audio-enabled', enabled),
+
+    // 세션 및 자동 시작
+    setSessionTimeout: (minutes) => ipcRenderer.invoke('set-session-timeout', minutes),
+    setAutoLaunch: (enabled) => ipcRenderer.invoke('set-auto-launch', enabled),
+
+    // 알림 설정
+    setNotificationSettings: (settings) => ipcRenderer.invoke('set-notification-settings', settings),
 
     // 파일 선택
     selectFile: () => ipcRenderer.invoke('select-file'),

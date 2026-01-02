@@ -1,7 +1,15 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Icon from './Icon';
 
 function HelpPage() {
+    const [appVersion, setAppVersion] = useState('--');
+
+    useEffect(() => {
+        window.electronAPI?.getAppVersion?.().then(version => {
+            setAppVersion(version || '1.0.0');
+        }).catch(() => setAppVersion('1.0.0'));
+    }, []);
+
     return (
         <div className="help-page">
             <h2 className="page-title">
@@ -64,8 +72,16 @@ function HelpPage() {
                         <span>전체 화면 전환</span>
                     </div>
                     <div className="hotkey-item">
+                        <kbd>F9</kbd>
+                        <span>통계 표시 토글</span>
+                    </div>
+                    <div className="hotkey-item">
+                        <kbd>F8</kbd>
+                        <span>오디오 토글</span>
+                    </div>
+                    <div className="hotkey-item">
                         <kbd>Esc</kbd>
-                        <span>전체 화면 종료</span>
+                        <span>연결 해제</span>
                     </div>
                 </div>
             </div>
@@ -73,8 +89,8 @@ function HelpPage() {
             <div className="help-section">
                 <h3 className="section-title">버전 정보</h3>
                 <div className="version-info">
-                    <p><strong>LunarView</strong> v1.0.0</p>
-                    <p className="text-muted">© 2024 LunarView. All rights reserved.</p>
+                    <p><strong>LunarView</strong> v{appVersion}</p>
+                    <p className="text-muted">© 2024-2026 LunarView. All rights reserved.</p>
                 </div>
             </div>
         </div>
@@ -82,3 +98,4 @@ function HelpPage() {
 }
 
 export default HelpPage;
+

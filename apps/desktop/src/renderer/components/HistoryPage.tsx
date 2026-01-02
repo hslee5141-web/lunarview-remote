@@ -43,39 +43,6 @@ const historyStorage = {
     }
 };
 
-// 샘플 데이터 생성 (개발용)
-const generateSampleData = (): ConnectionRecord[] => {
-    return [
-        {
-            id: '1',
-            name: '업무용 PC',
-            remoteId: '827053390',
-            date: '2024-12-27 14:30:00',
-            duration: '1시간 23분',
-            type: 'outgoing',
-            status: 'success'
-        },
-        {
-            id: '2',
-            name: '집 데스크톱',
-            remoteId: '912847561',
-            date: '2024-12-26 19:45:00',
-            duration: '45분',
-            type: 'outgoing',
-            status: 'success'
-        },
-        {
-            id: '3',
-            name: '친구 PC',
-            remoteId: '654321098',
-            date: '2024-12-25 21:10:00',
-            duration: '15분',
-            type: 'incoming',
-            status: 'success'
-        },
-    ];
-};
-
 function HistoryPage() {
     const [history, setHistory] = useState<ConnectionRecord[]>([]);
     const [savedConnections, setSavedConnections] = useState<any[]>([]);
@@ -84,12 +51,7 @@ function HistoryPage() {
     const [reconnecting, setReconnecting] = useState<string | null>(null);
 
     useEffect(() => {
-        let savedHistory = historyStorage.getHistory();
-        // 개발용: 히스토리가 비어있으면 샘플 데이터 생성
-        if (savedHistory.length === 0) {
-            savedHistory = generateSampleData();
-            localStorage.setItem('lunarview-history', JSON.stringify(savedHistory));
-        }
+        const savedHistory = historyStorage.getHistory();
         setHistory(savedHistory);
 
         // 저장된 연결 로드

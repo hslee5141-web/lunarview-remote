@@ -50,24 +50,54 @@ function SettingsPage() {
         return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
     });
     const [activeTab, setActiveTab] = useState<'general' | 'connection' | 'security' | 'notifications'>('general');
+    const [appVersion, setAppVersion] = useState('--');
 
     useEffect(() => {
         localStorage.setItem('lunarview-settings', JSON.stringify(settings));
     }, [settings]);
 
+    useEffect(() => {
+        // 앱 버전 로드
+        window.electronAPI?.getAppVersion?.().then(version => {
+            setAppVersion(version || '1.0.0');
+        }).catch(() => setAppVersion('1.0.0'));
+    }, []);
+
     const updateSetting = <K extends keyof Settings>(key: K, value: Settings[K]) => {
         setSettings(prev => ({ ...prev, [key]: value }));
 
+        // Electron API 연동
         if (window.electronAPI) {
             switch (key) {
                 case 'quality':
                     window.electronAPI.setQuality?.(value as 'auto' | 'low' | 'medium' | 'high');
                     break;
+                case 'framerate':
+                    window.electronAPI.setFramerate?.(value as number);
+                    break;
                 case 'gameMode':
                     window.electronAPI.setGameMode?.(value as boolean);
                     break;
+                case 'audioEnabled':
+                    window.electronAPI.setAudioEnabled?.(value as boolean);
+                    break;
                 case 'hotkeyPreset':
                     window.electronAPI.setHotkeyPreset?.(value as string);
+                    break;
+                case 'sessionTimeout':
+                    window.electronAPI.setSessionTimeout?.(value as number);
+                    break;
+                case 'startWithSystem':
+                    window.electronAPI.setAutoLaunch?.(value as boolean);
+                    break;
+                case 'notifyOnConnect':
+                case 'notifyOnDisconnect':
+                case 'soundEnabled':
+                    window.electronAPI.setNotificationSettings?.({
+                        notifyOnConnect: key === 'notifyOnConnect' ? value as boolean : settings.notifyOnConnect,
+                        notifyOnDisconnect: key === 'notifyOnDisconnect' ? value as boolean : settings.notifyOnDisconnect,
+                        soundEnabled: key === 'soundEnabled' ? value as boolean : settings.soundEnabled
+                    });
                     break;
             }
         }
@@ -371,9 +401,6 @@ function SettingsPage() {
                     <Icon name="refresh" size={14} />
                     설정 초기화
                 </button>
-                <div className="settings-version">
-                    LunarView v1.0.0
-                </div>
             </div>
         </div>
     );

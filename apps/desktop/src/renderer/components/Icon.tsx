@@ -299,6 +299,19 @@ const icons: Record<string, React.ReactNode> = {
         </svg>
     ),
 
+    // 닫기 (X)
+    'x': (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+    ),
+
+    'stop': (
+        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <rect x="6" y="6" width="12" height="12" rx="1" />
+        </svg>
+    ),
 };
 
 function Icon({ name, size = 20, className = '', color }: IconProps) {

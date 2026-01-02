@@ -192,23 +192,27 @@ function App() {
                     <button
                         className={`nav-btn ${isActiveView('host') ? 'active' : ''}`}
                         onClick={() => setViewMode('host')}
-                        disabled={status === 'session-active'}
+                    // 세션 중에도 홈 화면 확인 가능하도록 허용
                     >
                         <Icon name="home" size={14} />
                         내 컴퓨터
                     </button>
                     <button
-                        className={`nav-btn ${isActiveView('viewer') ? 'active' : ''}`}
-                        onClick={() => setViewMode('viewer')}
-                        disabled={status === 'session-active'}
+                        className={`nav-btn ${isActiveView('viewer') || isActiveView('connected') ? 'active' : ''}`}
+                        onClick={() => {
+                            if (status === 'session-active') {
+                                setViewMode('connected');
+                            } else {
+                                setViewMode('viewer');
+                            }
+                        }}
                     >
                         <Icon name="link" size={14} />
-                        원격 연결
+                        {status === 'session-active' ? '원격 화면' : '원격 연결'}
                     </button>
                     <button
                         className={`nav-btn ${isActiveView('files') ? 'active' : ''}`}
                         onClick={() => setViewMode('files')}
-                        disabled={status === 'session-active'}
                     >
                         <Icon name="folder" size={14} />
                         파일 전송
@@ -216,7 +220,6 @@ function App() {
                     <button
                         className={`nav-btn ${isActiveView('history') ? 'active' : ''}`}
                         onClick={() => setViewMode('history')}
-                        disabled={status === 'session-active'}
                     >
                         <Icon name="clock" size={14} />
                         기록

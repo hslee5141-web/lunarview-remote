@@ -16,7 +16,10 @@ export interface ElectronAPI {
     // 화면 캡처
     startScreenCapture: () => Promise<void>;
     stopScreenCapture: () => Promise<void>;
-    getScreens: () => Promise<Array<{ id: string; name: string; thumbnail: string }>>;
+    getScreens: () => Promise<Array<{ id: string; name: string; width: number; height: number }>>;
+    setSelectedScreen?: (screenId: string) => Promise<void>;
+    getCurrentDisplay?: () => Promise<{ id: number; bounds: { x: number; y: number; width: number; height: number } } | null>;
+    onDisplayChanged?: (callback: (data: { id: number; bounds: { x: number; y: number; width: number; height: number } }) => void) => (() => void) | void;
 
     // 입력 제어
     sendMouseEvent: (event: MouseEventData) => void;
@@ -57,6 +60,19 @@ export interface ElectronAPI {
     setQuality: (quality: 'low' | 'medium' | 'high' | 'auto') => Promise<void>;
     setAutoQuality: (enabled: boolean) => Promise<void>;
     getCaptureStats: () => Promise<{ fps: number; bitrate: number; latency: number }>;
+    setFramerate?: (fps: number) => Promise<void>;
+    setAudioEnabled?: (enabled: boolean) => Promise<void>;
+
+    // 세션 및 자동 시작
+    setSessionTimeout?: (minutes: number) => Promise<void>;
+    setAutoLaunch?: (enabled: boolean) => Promise<void>;
+
+    // 알림 설정
+    setNotificationSettings?: (settings: {
+        notifyOnConnect: boolean;
+        notifyOnDisconnect: boolean;
+        soundEnabled: boolean
+    }) => Promise<void>;
 
     // 단축키 설정
     getHotkeyPresets: () => Promise<string[]>;
