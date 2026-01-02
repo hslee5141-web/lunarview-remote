@@ -178,10 +178,13 @@ function createWindow() {
     // 서버 연결
     setTimeout(connectToServer, 1000);
 
-    // 자동 업데이트 초기화
-    autoUpdater.init(state.mainWindow, (event, data) => {
-        sendToRenderer('update-status', { event, ...data });
-    });
+    // 자동 업데이트 초기화 (세션 중엔 확인 안 함, 10초 딜레이)
+    setTimeout(() => {
+        if (!state.mainWindow || state.mainWindow.isDestroyed()) return;
+        autoUpdater.init(state.mainWindow, (event, data) => {
+            sendToRenderer('update-status', { event, ...data });
+        }, () => !state.sessionActive);
+    }, 10000);
 }
 
 // ===================
@@ -297,6 +300,10 @@ function handleServerMessage(message) {
 
         case 'keyboard-event':
             inputController.handleKeyboardEvent(message.event);
+            break;
+
+        case 'chat-message':
+            sendToRenderer('chat-message', message.text);
             break;
 
         case 'file-chunk':
@@ -557,6 +564,12 @@ ipcMain.on('mouse-event', (_, event) => {
 ipcMain.on('keyboard-event', (_, event) => {
     if (state.sessionActive) {
         sendToServer({ type: 'keyboard-event', event });
+    }
+});
+
+ipcMain.on('chat-message', (_, text) => {
+    if (state.sessionActive) {
+        sendToServer({ type: 'chat-message', text });
     }
 });
 

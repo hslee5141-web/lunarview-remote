@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 
 export interface ChatMessage {
     id: string;
@@ -38,10 +38,11 @@ export function useChat(): UseChatReturn {
     const sendChatMessage = useCallback(() => {
         if (!chatInput.trim()) return;
 
+        const text = chatInput.trim();
         const newMessage: ChatMessage = {
             id: Date.now().toString(),
             sender: 'local',
-            text: chatInput.trim(),
+            text: text,
             timestamp: new Date()
         };
 
@@ -49,7 +50,8 @@ export function useChat(): UseChatReturn {
         setChatInput('');
         scrollToBottom();
 
-        console.log('[useChat] Message sent:', newMessage.text);
+        // 실제 메시지 전송
+        window.electronAPI.sendChatMessage(text);
     }, [chatInput, scrollToBottom]);
 
     const toggleChat = useCallback(() => {
@@ -77,6 +79,16 @@ export function useChat(): UseChatReturn {
 
         scrollToBottom();
     }, [showChat, scrollToBottom]);
+
+    // 수신 메시지 리스너 등록
+    React.useEffect(() => {
+        const cleanup = window.electronAPI.onChatMessage((text: string) => {
+            addRemoteMessage(text);
+        });
+        return () => {
+            cleanup();
+        };
+    }, [addRemoteMessage]);
 
     return {
         showChat,

@@ -12,6 +12,7 @@ import AuthModal from './components/AuthModal';
 import UserMenu from './components/UserMenu';
 import SessionTimer from './components/SessionTimer';
 import UpgradePrompt from './components/UpgradePrompt';
+import UpdateNotification from './components/UpdateNotification';
 import WatermarkOverlay from './components/WatermarkOverlay';
 import SpaceBackground from './components/SpaceBackground';
 import { useTheme } from './contexts/ThemeContext';
@@ -40,6 +41,19 @@ function App() {
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [showUpgradePrompt, setShowUpgradePrompt] = useState<{ feature: string; message: string } | null>(null);
     const [showWatermark, setShowWatermark] = useState(false);
+    const [updateStatus, setUpdateStatus] = useState<any>(null);
+
+    const handleUpdateDownload = () => {
+        window.electronAPI.downloadUpdate();
+    };
+
+    const handleUpdateInstall = () => {
+        window.electronAPI.installUpdate();
+    };
+
+    const closeUpdateNotification = () => {
+        setUpdateStatus(null);
+    };
 
     useEffect(() => {
         // 이벤트 리스너 등록 및 cleanup 함수 수집
@@ -89,6 +103,16 @@ function App() {
         cleanups.push(
             window.electronAPI.onP2PStatus?.((data: { connected: boolean }) => {
                 setP2pConnected(data.connected);
+            })
+        );
+
+        cleanups.push(
+            window.electronAPI.onUpdateStatus((data: any) => {
+                setUpdateStatus(data);
+                // 다운로드 완료 시 자동 알림 표시 (선택 사항)
+                if (data.event === 'downloaded') {
+                    // console.log('Update downloaded');
+                }
             })
         );
 
@@ -331,6 +355,14 @@ function App() {
                 isOpen={showAuthModal}
                 onClose={() => setShowAuthModal(false)}
                 onLoginSuccess={handleLoginSuccess}
+            />
+
+            {/* 업데이트 알림 */}
+            <UpdateNotification
+                status={updateStatus}
+                onDownload={handleUpdateDownload}
+                onInstall={handleUpdateInstall}
+                onClose={closeUpdateNotification}
             />
 
             {/* 업그레이드 안내 */}

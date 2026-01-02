@@ -24,6 +24,8 @@ export interface ElectronAPI {
     // 입력 제어
     sendMouseEvent: (event: MouseEventData) => void;
     sendKeyboardEvent: (event: KeyboardEventData) => void;
+    sendChatMessage: (text: string) => void;
+    onChatMessage: (callback: (text: string) => void) => () => void;
 
     // 파일 전송
     sendFile: (filePath: string) => Promise<boolean>;

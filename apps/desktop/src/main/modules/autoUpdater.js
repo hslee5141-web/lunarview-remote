@@ -21,23 +21,22 @@ let updateStatus = {
     version: null
 };
 
-// 이벤트 콜백
-let onStatusChange = null;
+// 세션 상태 확인 콜백
+let shouldCheckForUpdates = () => true;
 
 /**
  * 자동 업데이트 초기화
  * @param {BrowserWindow} mainWindow - 메인 윈도우 인스턴스
  * @param {Function} statusCallback - 상태 변경 콜백
+ * @param {Function} checkCondition - 업데이트 확인 가능 여부 콜백 (optional)
  */
-function init(mainWindow, statusCallback) {
+function init(mainWindow, statusCallback, checkCondition = null) {
     onStatusChange = statusCallback;
+    if (checkCondition) {
+        shouldCheckForUpdates = checkCondition;
+    }
 
-    // 업데이트 서버 설정 (GitHub Releases 사용 시)
-    // 자체 서버 사용 시 아래 주석 해제
-    // autoUpdater.setFeedURL({
-    //     provider: 'generic',
-    //     url: 'https://your-server.com/updates/'
-    // });
+    // ... (server config)
 
     // 자동 다운로드 비활성화 (사용자 확인 후 다운로드)
     autoUpdater.autoDownload = false;
@@ -49,8 +48,19 @@ function init(mainWindow, statusCallback) {
     // 앱 시작 시 업데이트 확인 (개발 모드 제외)
     if (process.env.NODE_ENV === 'production') {
         setTimeout(() => {
+            // 시작 시에는 세션이 없을 테니 확인
             checkForUpdates();
         }, 3000);
+
+        // 1시간마다 주기적으로 업데이트 확인
+        setInterval(() => {
+            // 세션 중이면 확인 건너뜀
+            if (shouldCheckForUpdates()) {
+                checkForUpdates();
+            } else {
+                log.info('Skipping update check because session is active');
+            }
+        }, 60 * 60 * 1000);
     }
 }
 

@@ -5,6 +5,7 @@
     display: flex;
     flex-direction: column;
     background: #000;
+    cursor: default;
 }
 
 .toolbar {
@@ -109,6 +110,10 @@
     max-height: 100%;
     object-fit: contain;
     cursor: default;
+}
+
+.remote-canvas.viewer-mode {
+    cursor: none;
 }
 
 .remote-canvas:focus {

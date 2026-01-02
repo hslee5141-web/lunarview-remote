@@ -27,6 +27,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // 입력 제어
     sendMouseEvent: (event) => ipcRenderer.send('mouse-event', event),
     sendKeyboardEvent: (event) => ipcRenderer.send('keyboard-event', event),
+    sendChatMessage: (text) => ipcRenderer.send('chat-message', text),
+    onChatMessage: (callback) => {
+        const handler = (_, text) => callback(text);
+        ipcRenderer.on('chat-message', handler);
+        return () => ipcRenderer.removeListener('chat-message', handler);
+    },
 
     // 파일 전송
     sendFile: (filePath) => ipcRenderer.invoke('send-file', filePath),
