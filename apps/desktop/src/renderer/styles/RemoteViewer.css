@@ -112,9 +112,26 @@
     cursor: default;
 }
 
-.remote-canvas.viewer-mode {
-    cursor: none;
+/* Viewer Mode Cursor Handling */
+/* 
+.remote-viewer.viewer-mode,
+.remote-viewer.viewer-mode .canvas-container,
+.remote-viewer.viewer-mode .remote-canvas {
+    cursor: none !important;
 }
+*/
+/* Reverted: We want to show local cursor (TeamViewer style) and hide remote cursor via stream constraints */
+
+/* Show cursor on interactive elements */
+/*
+.remote-viewer.viewer-mode .toolbar,
+.remote-viewer.viewer-mode .toggle-toolbar,
+.remote-viewer.viewer-mode .chat-panel,
+.remote-viewer.viewer-mode .file-transfer-panel,
+.remote-viewer.viewer-mode .drag-overlay {
+    cursor: default !important;
+}
+*/
 
 .remote-canvas:focus {
     outline: none;
@@ -133,6 +150,7 @@
     color: var(--text-secondary);
     font-size: 10px;
     z-index: 101;
+    cursor: pointer;
 }
 
 .toggle-toolbar:hover {

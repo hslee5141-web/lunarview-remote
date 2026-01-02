@@ -236,7 +236,7 @@ function RemoteViewer({ onDisconnect, isViewer = false }: RemoteViewerProps) {
 
     return (
         <div
-            className="remote-viewer"
+            className={`remote-viewer ${isViewer ? 'viewer-mode' : ''}`}
             onMouseMove={showToolbarTemporarily}
             onMouseEnter={showToolbarTemporarily}
             onDragEnter={(e) => fileTransfer.handleDragEnter(e, isViewer)}

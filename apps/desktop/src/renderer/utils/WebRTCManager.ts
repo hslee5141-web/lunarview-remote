@@ -227,7 +227,9 @@ export class WebRTCManager extends BrowserEventEmitter {
                         minHeight: qualityConfig.height * 0.7,
                         maxHeight: qualityConfig.height,
                         minFrameRate: qualityConfig.fps / 2,
-                        maxFrameRate: qualityConfig.fps
+                        maxFrameRate: qualityConfig.fps,
+                        // @ts-ignore - Electron/Chrome specific
+                        cursor: 'never'
                     }
                 } as any
             });
