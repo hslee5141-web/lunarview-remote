@@ -403,7 +403,8 @@ function handleMessage(clientId: string, ws: WebSocket, message: any, ipAddress:
             break;
         case 'file-chunk':
         case 'clipboard-sync':
-            // 파일 청크와 클립보드도 상대방에게 릴레이
+        case 'chat-message':
+            // 파일 청크, 클립보드, 채팅도 상대방에게 릴레이
             handleInputEvent(clientId, message);
             break;
         case 'disconnect':

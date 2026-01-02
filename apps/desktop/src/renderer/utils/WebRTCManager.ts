@@ -55,6 +55,9 @@ export class WebRTCManager extends BrowserEventEmitter {
     private reconnectAttempts: number = 0;
     private maxReconnectAttempts: number = 5;
     private qualityPreset: 'low' | 'medium' | 'high' = 'high';
+    private gameMode: boolean = false;  // 게임 모드 (저지연 우선)
+
+    // ICE Candidate 큐 (remoteDescription 설정 전에 도착한 후보를 저장)
 
     // 최적화된 ICE 서버 구성 (TURN 서버 포함)
     private config: RTCConfiguration = {
@@ -99,36 +102,63 @@ export class WebRTCManager extends BrowserEventEmitter {
         max: 6_000_000    // 6 Mbps
     };
 
+    private signalCleanups: (() => void)[] = [];
+
     constructor() {
         super();
         this.setupSignalingListeners();
     }
 
     private setupSignalingListeners() {
-        window.electronAPI.onWebRTCOffer(async (data: any) => {
+        // 이미 등록된 리스너가 있다면 정리
+        this.removeAllSignalingListeners();
+
+        const offerCleanup = window.electronAPI.onWebRTCOffer(async (data: any) => {
             console.log('[WebRTCManager] Received offer');
             const offer = data.offer || data;
             await this.handleOffer(offer);
         });
+        if (typeof offerCleanup === 'function') this.signalCleanups.push(offerCleanup);
 
-        window.electronAPI.onWebRTCAnswer(async (data: any) => {
+        const answerCleanup = window.electronAPI.onWebRTCAnswer(async (data: any) => {
             console.log('[WebRTCManager] Received answer');
             const answer = data.answer || data;
             await this.handleAnswer(answer);
         });
+        if (typeof answerCleanup === 'function') this.signalCleanups.push(answerCleanup);
 
-        window.electronAPI.onWebRTCIceCandidate(async (data: { candidate: RTCIceCandidateInit }) => {
-            await this.handleIceCandidate(data.candidate);
+        const iceCleanup = window.electronAPI.onWebRTCIceCandidate(async (data: any) => {
+            // Main process sends: { type, candidate (string), sdpMid, sdpMLineIndex }
+            // RTCIceCandidateInit expects: { candidate (string), sdpMid, sdpMLineIndex }
+            const candidateInit: RTCIceCandidateInit = {
+                candidate: data.candidate,
+                sdpMid: data.sdpMid,
+                sdpMLineIndex: data.sdpMLineIndex
+            };
+            console.log('[WebRTCManager] Received ICE candidate:', candidateInit.candidate?.substring(0, 50));
+            await this.handleIceCandidate(candidateInit);
         });
+        if (typeof iceCleanup === 'function') this.signalCleanups.push(iceCleanup);
 
-        window.electronAPI.onWebRTCViewerReady?.(async () => {
-            console.log('[WebRTCManager] Received viewer-ready signal');
-            this.viewerReady = true;
-            if (this.isHost && this.localStream && this.peerConnection) {
-                console.log('[WebRTCManager] Host ready, creating offer...');
-                await this.createAndSendOffer();
-            }
+        const onViewerReady = window.electronAPI.onWebRTCViewerReady;
+        if (onViewerReady) {
+            const viewerReadyCleanup = onViewerReady(async () => {
+                console.log('[WebRTCManager] Received viewer-ready signal');
+                this.viewerReady = true;
+                if (this.isHost && this.localStream && this.peerConnection) {
+                    console.log('[WebRTCManager] Host ready, creating offer...');
+                    await this.createAndSendOffer();
+                }
+            });
+            if (typeof viewerReadyCleanup === 'function') this.signalCleanups.push(viewerReadyCleanup);
+        }
+    }
+
+    private removeAllSignalingListeners() {
+        this.signalCleanups.forEach(cleanup => {
+            if (typeof cleanup === 'function') cleanup();
         });
+        this.signalCleanups = [];
     }
 
     // --- Host Methods ---
@@ -142,28 +172,29 @@ export class WebRTCManager extends BrowserEventEmitter {
             return;
         }
 
-        // 이미 스트림이 있고 활성 상태라면 재시작하지 않음
-        if (this.localStream && this.localStream.active) {
-            const tracks = this.localStream.getVideoTracks();
-            if (tracks.length > 0 && tracks[0].readyState === 'live') {
-                console.log('[WebRTCManager] Host already running with active stream, skipping initialization');
-                return;
-            }
+        // 이미 완료된 상태라면 재시작 방지
+        if (this.isHost && this.localStream && this.peerConnection && this.peerConnection.connectionState !== 'closed') {
+            console.log('[WebRTCManager] Host already running and healthy, skipping initialization');
+            return;
         }
 
         this.isStartingHost = true;
         this.isHost = true;
 
+        // ICE 후보 큐 초기화
+        this.pendingIceCandidates = [];
+
         try {
             console.log('[WebRTCManager] Starting Host...');
 
-            // 기존 스트림 및 연결 명시적 정리
+            // 기존 스트림 및 연결 명시적 정리 (항상 새로 시작)
             if (this.localStream) {
                 console.log('[WebRTCManager] Stopping existing stream...');
                 this.localStream.getTracks().forEach(track => track.stop());
                 this.localStream = null;
             }
             if (this.peerConnection) {
+                console.log('[WebRTCManager] Closing existing peer connection...');
                 this.peerConnection.close();
                 this.peerConnection = null;
             }
@@ -210,7 +241,8 @@ export class WebRTCManager extends BrowserEventEmitter {
             this.localStream = stream;
             this.emit('local-stream', stream);
 
-            // 시스템 오디오 캡처
+            // 시스템 오디오 캡처 - 크래시 원인으로 의심되어 임시 비활성화
+            /*
             if (this.audioEnabled) {
                 try {
                     const audioStream = await navigator.mediaDevices.getUserMedia({
@@ -228,6 +260,7 @@ export class WebRTCManager extends BrowserEventEmitter {
                     console.warn('[WebRTCManager] Could not capture system audio:', audioErr);
                 }
             }
+            */
 
             // PeerConnection 생성 및 트랙 추가
             this.createPeerConnection();
@@ -319,11 +352,19 @@ export class WebRTCManager extends BrowserEventEmitter {
      * 비트레이트 설정 적용
      */
     private async applyBitrateSettings() {
-        if (!this.peerConnection) return;
+        if (!this.peerConnection) {
+            console.warn('[WebRTCManager] applyBitrateSettings: No peer connection');
+            return;
+        }
 
         const senders = this.peerConnection.getSenders();
+        console.log('[WebRTCManager] applyBitrateSettings: Found', senders.length, 'senders, isHost:', this.isHost);
+
         const videoSender = senders.find(s => s.track?.kind === 'video');
-        if (!videoSender) return;
+        if (!videoSender) {
+            console.warn('[WebRTCManager] applyBitrateSettings: No video sender found (this is normal for Viewer)');
+            return;
+        }
 
         try {
             const params = videoSender.getParameters();
@@ -375,25 +416,47 @@ export class WebRTCManager extends BrowserEventEmitter {
             return;
         }
         try {
+            console.log('[WebRTCManager] Creating offer...');
             const offer = await this.peerConnection.createOffer({
                 offerToReceiveVideo: false,
                 offerToReceiveAudio: false
             });
+
+            console.log('[WebRTCManager] Offer created, type:', offer.type);
 
             // SDP 최적화 적용
             if (offer.sdp) {
                 offer.sdp = this.optimizeSDP(offer.sdp);
             }
 
+            console.log('[WebRTCManager] Setting local description...');
             await this.peerConnection.setLocalDescription(offer);
 
             // 타이밍 이슈 방지를 위한 짧은 대기
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // await new Promise(resolve => setTimeout(resolve, 500)); 
+            // 500ms might be too long, try 100ms or remove if not needed, but keeping delay for safety
+            await new Promise(resolve => setTimeout(resolve, 100));
 
             // IPC 안전성을 위해 순수 객체로 변환
             const safeOffer = { type: offer.type, sdp: offer.sdp };
-            console.log('[WebRTCManager] Sending offer (safe v3):', safeOffer.type);
-            window.electronAPI.sendWebRTCOffer(JSON.parse(JSON.stringify(safeOffer)));
+
+            if (!safeOffer.sdp) {
+                console.error('[WebRTCManager] SDP is missing!');
+                return;
+            }
+
+            console.log('[WebRTCManager] Sending offer via IPC (safe v4):', safeOffer.type, 'SDP Length:', safeOffer.sdp.length);
+
+            // Validate offer before sending
+            try {
+                const serialized = JSON.stringify(safeOffer);
+                const parsed = JSON.parse(serialized);
+                window.electronAPI.sendWebRTCOffer(parsed);
+                console.log('[WebRTCManager] IPC sent successfully');
+            } catch (ipcErr) {
+                console.error('[WebRTCManager] Failed to send IPC:', ipcErr);
+            }
+
         } catch (err) {
             console.error('[WebRTCManager] Error creating offer:', err);
         }
@@ -406,6 +469,13 @@ export class WebRTCManager extends BrowserEventEmitter {
     public async startViewer() {
         if (this.isStartingViewer) {
             console.log('[WebRTCManager] startViewer already in progress, skipping...');
+            return;
+        }
+
+        // 이미 뷰어 모드로 동작 중이고 연결이 유효하다면 중복 초기화 방지
+        if (!this.isHost && this.peerConnection && this.peerConnection.connectionState !== 'closed') {
+            console.log('[WebRTCManager] Viewer already active, re-sending ready signal only.');
+            window.electronAPI.sendWebRTCViewerReady?.();
             return;
         }
 
@@ -512,11 +582,21 @@ export class WebRTCManager extends BrowserEventEmitter {
         };
     }
 
+    private isProcessingOffer: boolean = false;
+
     private async handleOffer(offer: RTCSessionDescriptionInit) {
         if (this.isHost) return;
 
+        // 이미 Offer 처리 중이면 무시
+        if (this.isProcessingOffer) {
+            console.log('[WebRTCManager] Already processing an offer, ignoring duplicate');
+            return;
+        }
+
+        this.isProcessingOffer = true;
+
         try {
-            console.log('[WebRTCManager] Recieved Offer, creating Answer...');
+            console.log('[WebRTCManager] Received Offer, creating Answer...');
 
             // 기존 연결이 유효하면 재사용, 아니면 새로 생성
             if (!this.peerConnection || this.peerConnection.connectionState === 'closed') {
@@ -530,14 +610,38 @@ export class WebRTCManager extends BrowserEventEmitter {
                 console.log('[WebRTCManager] Reusing existing PeerConnection for offer');
             }
 
-            // 시그널링 상태 확인
-            if (this.peerConnection!.signalingState !== 'stable') {
-                console.warn('[WebRTCManager] Signaling state is not stable:', this.peerConnection!.signalingState);
-                // 롤백이 필요할 수도 있지만 일단 진행
+            // 이미 연결되어 있으면 중복 Offer 무시
+            if (this.peerConnection!.connectionState === 'connected') {
+                console.log('[WebRTCManager] Already connected, ignoring offer');
+                return;
+            }
+
+            // 시그널링 상태가 have-remote-offer 또는 have-local-offer이면 롤백
+            const signalingState = this.peerConnection!.signalingState;
+            if (signalingState !== 'stable') {
+                console.warn('[WebRTCManager] Signaling state is not stable:', signalingState);
+                if (signalingState === 'have-local-offer') {
+                    // 우리가 Offer를 보낸 상태에서 상대방도 Offer를 보낸 경우 (glare)
+                    // 롤백 후 상대방 Offer 처리
+                    try {
+                        await this.peerConnection!.setLocalDescription({ type: 'rollback' });
+                        console.log('[WebRTCManager] Rolled back from have-local-offer');
+                    } catch (rollbackErr) {
+                        console.warn('[WebRTCManager] Rollback failed:', rollbackErr);
+                        return;
+                    }
+                } else if (signalingState === 'have-remote-offer') {
+                    // 이미 Offer를 처리 중 - 이 경우 무시
+                    console.log('[WebRTCManager] Already have remote offer, ignoring');
+                    return;
+                }
             }
 
             await this.peerConnection!.setRemoteDescription(new RTCSessionDescription(offer));
             console.log('[WebRTCManager] Remote description set');
+
+            // 큐에 저장된 ICE 후보 처리
+            await this.processPendingCandidates();
 
             const answer = await this.peerConnection!.createAnswer();
             await this.peerConnection!.setLocalDescription(answer);
@@ -546,6 +650,8 @@ export class WebRTCManager extends BrowserEventEmitter {
             console.log('[WebRTCManager] Answer sent');
         } catch (err) {
             console.error('[WebRTCManager] Error handling offer:', err);
+        } finally {
+            this.isProcessingOffer = false;
         }
     }
 
@@ -557,6 +663,9 @@ export class WebRTCManager extends BrowserEventEmitter {
                 await this.peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
                 console.log('[WebRTCManager] Remote description set');
 
+                // 큐에 저장된 ICE 후보 처리
+                await this.processPendingCandidates();
+
                 // 연결 후 비트레이트 재적용
                 setTimeout(() => this.applyBitrateSettings(), 500);
             }
@@ -565,14 +674,46 @@ export class WebRTCManager extends BrowserEventEmitter {
         }
     }
 
+    // ICE 후보 큐
+    private pendingIceCandidates: RTCIceCandidateInit[] = [];
+
     private async handleIceCandidate(candidate: RTCIceCandidateInit) {
         try {
+            if (!candidate || !candidate.candidate) {
+                // 유효하지 않은 후보는 무시
+                return;
+            }
+
             if (this.peerConnection && this.peerConnection.remoteDescription) {
+                // remoteDescription이 설정되어 있으면 바로 추가
                 await this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                console.log('[WebRTCManager] ICE candidate added');
+            } else {
+                // remoteDescription이 아직 없으면 큐에 저장
+                console.log('[WebRTCManager] Queueing ICE candidate (remote description not set yet)');
+                this.pendingIceCandidates.push(candidate);
             }
         } catch (err) {
             console.error('[WebRTCManager] Error adding ICE candidate:', err);
         }
+    }
+
+    private async processPendingCandidates() {
+        if (!this.peerConnection || !this.peerConnection.remoteDescription) {
+            return;
+        }
+
+        console.log(`[WebRTCManager] Processing ${this.pendingIceCandidates.length} pending ICE candidates`);
+
+        for (const candidate of this.pendingIceCandidates) {
+            try {
+                await this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+            } catch (err) {
+                console.warn('[WebRTCManager] Error adding pending ICE candidate:', err);
+            }
+        }
+
+        this.pendingIceCandidates = [];
     }
 
     // --- Statistics Monitoring ---
@@ -643,7 +784,6 @@ export class WebRTCManager extends BrowserEventEmitter {
     private startAdaptiveBitrate() {
         if (!this.isHost || this.bitrateAdjustInterval) return;
 
-        let lastBytesSent = 0;
         let consecutiveLowBandwidth = 0;
 
         this.bitrateAdjustInterval = setInterval(async () => {
@@ -721,6 +861,7 @@ export class WebRTCManager extends BrowserEventEmitter {
         }
 
         this.remoteStream = null;
+        this.removeAllSignalingListeners();
         console.log('[WebRTCManager] Closed');
     }
 
@@ -778,6 +919,97 @@ export class WebRTCManager extends BrowserEventEmitter {
      */
     public isAudioEnabled(): boolean {
         return this.audioEnabled;
+    }
+
+    // --- 게임 모드 ---
+
+    /**
+     * 게임 모드 설정 (저지연 우선)
+     * - 해상도 낮춤 (720p)
+     * - 비트레이트 높임 (빠른 전송)
+     * - 인코딩 최적화 (low-latency)
+     */
+    public async setGameMode(enabled: boolean) {
+        this.gameMode = enabled;
+        console.log('[WebRTCManager] Game mode:', enabled ? 'ON (low-latency)' : 'OFF');
+
+        if (enabled) {
+            // 게임 모드: 720p + 높은 비트레이트 + 60fps
+            this.targetBitrate = {
+                min: 3_000_000,   // 3 Mbps
+                start: 5_000_000, // 5 Mbps
+                max: 10_000_000   // 10 Mbps
+            };
+        } else {
+            // 일반 모드: 품질 프리셋에 따른 비트레이트
+            const config = this.getQualityConfig();
+            this.targetBitrate = {
+                min: 1_000_000,
+                start: config.bitrate / 2,
+                max: config.bitrate
+            };
+        }
+
+        // 비트레이트 설정 적용
+        await this.applyBitrateSettings();
+
+        // 게임 모드용 인코딩 파라미터 적용
+        await this.applyGameModeEncodingParams(enabled);
+
+        this.emit('game-mode-changed', enabled);
+    }
+
+    /**
+     * 게임 모드용 인코딩 파라미터 적용
+     */
+    private async applyGameModeEncodingParams(enabled: boolean) {
+        if (!this.peerConnection) return;
+
+        const senders = this.peerConnection.getSenders();
+        const videoSender = senders.find(s => s.track?.kind === 'video');
+        if (!videoSender) return;
+
+        try {
+            const params = videoSender.getParameters();
+            if (!params.encodings || params.encodings.length === 0) {
+                params.encodings = [{}];
+            }
+
+            if (enabled) {
+                // 게임 모드: 낮은 해상도 스케일링, 높은 프레임레이트 우선
+                params.encodings[0].maxBitrate = this.targetBitrate.max;
+                params.encodings[0].maxFramerate = 120;  // 게임 모드는 120fps
+                params.encodings[0].scaleResolutionDownBy = 1.5; // 720p 스케일
+                // @ts-ignore - priority는 표준이지만 타입 정의에 없을 수 있음
+                params.encodings[0].priority = 'high';
+                // @ts-ignore - networkPriority도 마찬가지
+                params.encodings[0].networkPriority = 'high';
+            } else {
+                // 일반 모드: 원본 해상도
+                params.encodings[0].maxBitrate = this.targetBitrate.max;
+                params.encodings[0].maxFramerate = 60;
+                params.encodings[0].scaleResolutionDownBy = 1.0;
+            }
+
+            await videoSender.setParameters(params);
+            console.log('[WebRTCManager] Game mode encoding params applied:', enabled);
+        } catch (err) {
+            console.warn('[WebRTCManager] Could not apply game mode encoding params:', err);
+        }
+    }
+
+    /**
+     * 게임 모드 상태 반환
+     */
+    public isGameModeEnabled(): boolean {
+        return this.gameMode;
+    }
+
+    /**
+     * 현재 수신 중인 원격 스트림 반환 (UI 복구용)
+     */
+    public getRemoteStream(): MediaStream | null {
+        return this.remoteStream;
     }
 
     // --- 자동 재연결 ---

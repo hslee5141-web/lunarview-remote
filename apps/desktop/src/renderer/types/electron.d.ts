@@ -34,7 +34,7 @@ export interface ElectronAPI {
     onConnectionStatus: (callback: (status: string) => void) => (() => void) | void;
     onCredentialsUpdated: (callback: (data: { connectionId: string; password: string }) => void) => (() => void) | void;
     onScreenFrame: (callback: (frame: ArrayBuffer) => void) => (() => void) | void;
-    onFileProgress: (callback: (progress: number) => void) => (() => void) | void;
+    onFileProgress: (callback: (progress: { fileName: string; progress: number; status: string; error?: string }) => void) => (() => void) | void;
     onIncomingConnection: (callback: (data: { peerId: string }) => void) => (() => void) | void;
     onSessionStarted: (callback: (data: { peerId: string; isViewer: boolean }) => void) => (() => void) | void;
     onSessionEnded: (callback: (data?: any) => void) => (() => void) | void;

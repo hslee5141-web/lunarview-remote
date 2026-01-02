@@ -8,13 +8,25 @@
 }
 
 .toolbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 8px 16px;
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 80%, transparent 100%);
+    border-bottom: none;
     z-index: 100;
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.toolbar.hidden {
+    opacity: 0;
+    transform: translateY(-100%);
+    pointer-events: none;
 }
 
 .toolbar-left,
@@ -121,4 +133,250 @@
 .toggle-toolbar:hover {
     background: var(--accent-primary);
     color: white;
+}
+
+/* Stats Display */
+.stats-display {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: #e5e7eb;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 4px 10px;
+    border-radius: 4px;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Drag Overlay */
+.drag-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(139, 92, 246, 0.3);
+    border: 4px dashed #8b5cf6;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    pointer-events: none;
+}
+
+.drag-overlay-content {
+    background: rgba(0, 0, 0, 0.8);
+    padding: 32px 48px;
+    border-radius: 16px;
+    text-align: center;
+}
+
+/* File Transfer Panel */
+.file-transfer-panel {
+    position: absolute;
+    bottom: 80px;
+    right: 16px;
+    width: 300px;
+    background: rgba(0, 0, 0, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px;
+    z-index: 150;
+}
+
+.file-transfer-header {
+    font-size: 13px;
+    color: #9ca3af;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.file-transfer-item {
+    padding: 8px 0;
+}
+
+.file-transfer-item.with-border {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.file-transfer-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+.file-name {
+    color: #fff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 180px;
+}
+
+.file-progress-bar {
+    margin-top: 6px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.file-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #8b5cf6, #06b6d4);
+    transition: width 0.3s ease;
+}
+
+/* Chat Panel */
+.chat-panel {
+    position: absolute;
+    bottom: 80px;
+    left: 16px;
+    width: 320px;
+    height: 400px;
+    background: rgba(0, 0, 0, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    z-index: 150;
+}
+
+.chat-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.chat-title {
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chat-close-btn {
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow: auto;
+    padding: 12px;
+}
+
+.chat-empty {
+    color: #6b7280;
+    font-size: 13px;
+    text-align: center;
+    margin-top: 40px;
+}
+
+.chat-message {
+    margin-bottom: 8px;
+}
+
+.chat-message.local {
+    text-align: right;
+}
+
+.chat-message.remote {
+    text-align: left;
+}
+
+.chat-bubble {
+    display: inline-block;
+    padding: 8px 12px;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 13px;
+    max-width: 80%;
+    word-break: break-word;
+}
+
+.chat-message.local .chat-bubble {
+    background: #8b5cf6;
+}
+
+.chat-message.remote .chat-bubble {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.chat-timestamp {
+    font-size: 10px;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+.chat-input-container {
+    padding: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    gap: 8px;
+}
+
+.chat-input {
+    flex: 1;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 13px;
+}
+
+.chat-input::placeholder {
+    color: #6b7280;
+}
+
+.chat-send-btn {
+    padding: 10px 16px;
+    background: #8b5cf6;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+}
+
+.chat-send-btn:hover {
+    background: #7c3aed;
+}
+
+/* Reconnect Overlay */
+.reconnect-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    color: #fff;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top: 3px solid #fff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
 }

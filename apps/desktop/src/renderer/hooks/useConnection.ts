@@ -194,16 +194,17 @@ export function useInputHandler(canvasRef: React.RefObject<HTMLCanvasElement>) {
 }
 
 /**
- * 파일 전송 훅
+ * 파일 전송 훅 (간단 버전 - 레거시)
  */
-export function useFileTransfer() {
+export function useSimpleFileTransfer() {
     const [progress, setProgress] = useState(0);
     const [isTransferring, setIsTransferring] = useState(false);
 
     useEffect(() => {
-        window.electronAPI.onFileProgress((progress: number) => {
-            setProgress(progress);
-            setIsTransferring(progress > 0 && progress < 100);
+        window.electronAPI.onFileProgress((progressData: any) => {
+            const value = typeof progressData === 'number' ? progressData : progressData?.progress ?? 0;
+            setProgress(value);
+            setIsTransferring(value > 0 && value < 100);
         });
     }, []);
 

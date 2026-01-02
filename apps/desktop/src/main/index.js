@@ -88,6 +88,9 @@ function sendToRenderer(channel, data) {
             state.mainWindow.webContents.send(channel, data);
         } catch (e) {
             // 렌더러가 비정상 종료된 경우 로그만 남기고 무시 (앱 크래시 방지)
+            if (e.message.includes('Render frame was disposed')) {
+                return; // 개발 중 HMR 등으로 인한 자연스러운 현상이므로 무시
+            }
             console.log(`[Main] Failed to send ${channel} (renderer might be gone):`, e.message);
         }
     }
@@ -122,12 +125,13 @@ function createWindow() {
     });
 
     // 패키징된 앱이거나, npm start로 실행된 경우 (프로덕션 빌드 테스트)
-    const isDev = process.env.npm_lifecycle_event === 'dev:electron' || process.env.npm_lifecycle_event === 'dev';
+    // 개발 모드는 --dev 플래그로 구분
+    const isDev = process.argv.includes('--dev');
 
     // 개발 모드이고 패키징되지 않았을 때만 localhost 연결
     if (!app.isPackaged && isDev) {
         state.mainWindow.loadURL('http://localhost:5173');
-        state.mainWindow.webContents.openDevTools();
+        // state.mainWindow.webContents.openDevTools();
     } else {
         // 그 외(빌드된 앱 테스트 또는 패키징된 앱)는 파일 로드
         // dist/main/index.js 기준 ../renderer/index.html
@@ -726,8 +730,8 @@ ipcMain.handle('set-auth-tokens', async (_, data) => {
         planRestrictions.setUser(user);
     }
     // 렌더러에 알림
-    if (mainWindow) {
-        mainWindow.webContents.send('oauth-success', { accessToken, refreshToken });
+    if (state.mainWindow) {
+        state.mainWindow.webContents.send('oauth-success', { accessToken, refreshToken });
     }
 });
 

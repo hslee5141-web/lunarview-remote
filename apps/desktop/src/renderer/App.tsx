@@ -5,7 +5,7 @@ import ConnectionPanel from './components/ConnectionPanel';
 import SettingsPage from './components/SettingsPage';
 import HelpPage from './components/HelpPage';
 import FileTransferPage from './components/FileTransferPage';
-import HistoryPage from './components/HistoryPage';
+import HistoryPage, { historyStorage } from './components/HistoryPage';
 import TitleBar from './components/TitleBar';
 import Icon from './components/Icon';
 import AuthModal from './components/AuthModal';
@@ -141,17 +141,43 @@ function App() {
             if (!success) {
                 setError('서버에 연결할 수 없습니다');
                 setIsViewer(false);
+                // 실패 기록 저장
+                historyStorage.addRecord({
+                    name: `PC-${remoteId.slice(-4)}`,
+                    remoteId: remoteId,
+                    duration: '-',
+                    type: 'outgoing',
+                    status: 'failed'
+                });
+            } else {
+                // 성공 기록 저장
+                historyStorage.addRecord({
+                    name: `PC-${remoteId.slice(-4)}`,
+                    remoteId: remoteId,
+                    duration: '연결됨',
+                    type: 'outgoing',
+                    status: 'success'
+                });
             }
         } catch (err: any) {
             setError(err.message || '연결 실패');
             setIsViewer(false);
+            // 에러 기록 저장
+            historyStorage.addRecord({
+                name: `PC-${remoteId.slice(-4)}`,
+                remoteId: remoteId,
+                duration: '-',
+                type: 'outgoing',
+                status: 'failed'
+            });
         }
     };
 
     const handleDisconnect = async () => {
-        await window.electronAPI.disconnect();
         setViewMode('host');
         setIsViewer(false);
+        setStatus('connected');
+        await window.electronAPI.disconnect();
     };
 
     const handleRefreshPassword = async () => {
@@ -210,13 +236,15 @@ function App() {
                         <Icon name="link" size={14} />
                         {status === 'session-active' ? '원격 화면' : '원격 연결'}
                     </button>
-                    <button
-                        className={`nav-btn ${isActiveView('files') ? 'active' : ''}`}
-                        onClick={() => setViewMode('files')}
-                    >
-                        <Icon name="folder" size={14} />
-                        파일 전송
-                    </button>
+                    {status === 'session-active' && (
+                        <button
+                            className={`nav-btn ${isActiveView('files') ? 'active' : ''}`}
+                            onClick={() => setViewMode('files')}
+                        >
+                            <Icon name="folder" size={14} />
+                            파일 전송
+                        </button>
+                    )}
                     <button
                         className={`nav-btn ${isActiveView('history') ? 'active' : ''}`}
                         onClick={() => setViewMode('history')}
@@ -249,6 +277,12 @@ function App() {
                     >
                         <Icon name="help" size={16} />
                     </button>
+                    <div className="divider-vertical" style={{ width: '1px', height: '16px', background: 'var(--border-subtle)', margin: '0 8px' }} />
+                    <UserMenu
+                        user={user}
+                        onLogin={() => setShowAuthModal(true)}
+                        onLogout={handleLogout}
+                    />
                 </div>
             </div>
 
@@ -291,13 +325,6 @@ function App() {
             </main>
 
             {/* 사용자 메뉴 - 타이틀바 우측에 추가될 위치 */}
-            <div className="user-menu-container">
-                <UserMenu
-                    user={user}
-                    onLogin={() => setShowAuthModal(true)}
-                    onLogout={handleLogout}
-                />
-            </div>
 
             {/* 인증 모달 */}
             <AuthModal

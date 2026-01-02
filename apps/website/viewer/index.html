@@ -179,7 +179,10 @@
 
             <!-- 원격 화면 -->
             <div class="canvas-container">
-                <canvas id="remote-canvas"></canvas>
+                <!-- WebRTC 비디오 스트림 (우선 사용) -->
+                <video id="remote-video" autoplay playsinline muted></video>
+                <!-- 폴백용 캔버스 (screen-frame 모드) -->
+                <canvas id="remote-canvas" style="display: none;"></canvas>
                 <div class="canvas-overlay" id="canvas-overlay">
                     <div class="loading-spinner"></div>
                     <p>화면 로딩 중...</p>

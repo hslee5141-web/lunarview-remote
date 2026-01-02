@@ -15,6 +15,15 @@ class RemoteViewer {
         this.pingInterval = null;
         this.lastPing = 0;
 
+        // WebRTC 관련 속성
+        this.peerConnection = null;
+        this.dataChannel = null;
+        this.useWebRTC = true; // WebRTC 사용 여부
+        this.webrtcConnected = false;
+        this.pendingIceCandidates = [];
+        this.targetConnectionId = '';
+        this.videoElement = null;
+
         this.initElements();
         this.initEventListeners();
         this.initSocialLogin();
@@ -179,6 +188,9 @@ class RemoteViewer {
 
                 // Request connection
                 setTimeout(() => {
+                    // WebRTC에서 사용할 target ID 저장
+                    this.targetConnectionId = connectionId;
+
                     this.ws.send(JSON.stringify({
                         type: 'connect',
                         targetConnectionId: connectionId,
@@ -226,6 +238,16 @@ class RemoteViewer {
                 this.remoteName.textContent = message.hostName || '원격 PC';
                 this.showViewer();
                 this.startPingMonitor();
+
+                // WebRTC 모드: viewer-ready 시그널 전송
+                if (this.useWebRTC) {
+                    this.initWebRTC();
+                    this.ws.send(JSON.stringify({
+                        type: 'webrtc-viewer-ready',
+                        targetConnectionId: this.targetConnectionId
+                    }));
+                    console.log('[WebRTC] Sent viewer-ready signal');
+                }
                 break;
 
             case 'connect-error':
@@ -235,7 +257,10 @@ class RemoteViewer {
                 break;
 
             case 'screen-frame':
-                this.renderFrame(message.frame);
+                // WebRTC가 연결되지 않은 경우에만 JPEG 폴백 사용
+                if (!this.webrtcConnected) {
+                    this.renderFrame(message.frame);
+                }
                 break;
 
             case 'pong':
@@ -245,6 +270,15 @@ class RemoteViewer {
 
             case 'disconnected':
                 this.disconnect();
+                break;
+
+            // WebRTC 시그널링 메시지
+            case 'webrtc-offer':
+                this.handleWebRTCOffer(message);
+                break;
+
+            case 'webrtc-ice-candidate':
+                this.handleWebRTCIceCandidate(message);
                 break;
         }
     }
@@ -318,8 +352,17 @@ class RemoteViewer {
         this.sendMouseEvent('up', pos.x, pos.y, e.button);
     }
 
+    // 활성 요소 가져오기 (WebRTC 모드면 video, 아니면 canvas)
+    getActiveElement() {
+        if (this.webrtcConnected && this.videoElement) {
+            return this.videoElement;
+        }
+        return this.canvas;
+    }
+
     getTouchPosition(touch) {
-        const rect = this.canvas.getBoundingClientRect();
+        const elem = this.getActiveElement();
+        const rect = elem.getBoundingClientRect();
         return {
             x: (touch.clientX - rect.left) / rect.width,
             y: (touch.clientY - rect.top) / rect.height
@@ -327,7 +370,8 @@ class RemoteViewer {
     }
 
     getMousePosition(e) {
-        const rect = this.canvas.getBoundingClientRect();
+        const elem = this.getActiveElement();
+        const rect = elem.getBoundingClientRect();
         return {
             x: (e.clientX - rect.left) / rect.width,
             y: (e.clientY - rect.top) / rect.height
@@ -335,20 +379,32 @@ class RemoteViewer {
     }
 
     sendMouseEvent(type, x, y, button = 0) {
-        if (this.ws && this.connected) {
-            this.ws.send(JSON.stringify({
-                type: 'mouse-event',
-                event: { type, x, y, button }
-            }));
+        const message = JSON.stringify({
+            type: 'mouse-event',
+            event: { type, x, y, button }
+        });
+
+        // DataChannel이 열려있으면 우선 사용 (저지연)
+        if (this.dataChannel && this.dataChannel.readyState === 'open') {
+            this.dataChannel.send(message);
+        } else if (this.ws && this.connected) {
+            // WebSocket 폴백
+            this.ws.send(message);
         }
     }
 
     sendKeyboardEvent(type, key, modifiers = []) {
-        if (this.ws && this.connected) {
-            this.ws.send(JSON.stringify({
-                type: 'keyboard-event',
-                event: { type, key, modifiers }
-            }));
+        const message = JSON.stringify({
+            type: 'keyboard-event',
+            event: { type, key, modifiers }
+        });
+
+        // DataChannel이 열려있으면 우선 사용 (저지연)
+        if (this.dataChannel && this.dataChannel.readyState === 'open') {
+            this.dataChannel.send(message);
+        } else if (this.ws && this.connected) {
+            // WebSocket 폴백
+            this.ws.send(message);
         }
     }
 
@@ -402,6 +458,19 @@ class RemoteViewer {
             clearInterval(this.pingInterval);
             this.pingInterval = null;
         }
+
+        // WebRTC 정리
+        this.cleanupWebRTC();
+
+        // Video 요소 초기화
+        if (this.videoElement) {
+            this.videoElement.srcObject = null;
+            this.videoElement.style.display = 'none';
+        }
+        if (this.canvas) {
+            this.canvas.style.display = 'block';
+        }
+
         if (this.ws) {
             this.ws.close();
             this.ws = null;
@@ -481,6 +550,227 @@ class RemoteViewer {
         document.querySelectorAll('.special-key.modifier.active').forEach(btn => {
             btn.classList.remove('active');
         });
+    }
+
+    // =============================================
+    // WebRTC 관련 메서드
+    // =============================================
+
+    initWebRTC() {
+        const config = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
+
+        this.peerConnection = new RTCPeerConnection(config);
+        console.log('[WebRTC] PeerConnection created');
+
+        // ICE Candidate 이벤트
+        this.peerConnection.onicecandidate = (event) => {
+            if (event.candidate) {
+                this.ws.send(JSON.stringify({
+                    type: 'webrtc-ice-candidate',
+                    candidate: event.candidate.candidate,
+                    sdpMid: event.candidate.sdpMid,
+                    sdpMLineIndex: event.candidate.sdpMLineIndex
+                }));
+                console.log('[WebRTC] Sent ICE candidate');
+            }
+        };
+
+        // 연결 상태 변경
+        this.peerConnection.onconnectionstatechange = () => {
+            console.log('[WebRTC] Connection state:', this.peerConnection.connectionState);
+            if (this.peerConnection.connectionState === 'connected') {
+                this.webrtcConnected = true;
+                this.updateConnectionStatus('connected', 'WebRTC P2P 연결됨');
+                // Canvas 숨기고 Video 표시
+                if (this.canvas) this.canvas.style.display = 'none';
+                if (this.videoElement) this.videoElement.style.display = 'block';
+            } else if (this.peerConnection.connectionState === 'failed' ||
+                this.peerConnection.connectionState === 'disconnected') {
+                this.webrtcConnected = false;
+                this.updateConnectionStatus('error', 'WebRTC 연결 실패');
+                // 폴백: Canvas 다시 표시
+                if (this.canvas) this.canvas.style.display = 'block';
+                if (this.videoElement) this.videoElement.style.display = 'none';
+            }
+        };
+
+        // 원격 스트림 수신
+        this.peerConnection.ontrack = (event) => {
+            console.log('[WebRTC] Received track:', event.track.kind);
+
+            if (event.track.kind === 'video') {
+                // Video 요소 생성 또는 재사용
+                if (!this.videoElement) {
+                    this.videoElement = document.createElement('video');
+                    this.videoElement.id = 'webrtc-video';
+                    this.videoElement.autoplay = true;
+                    this.videoElement.playsInline = true;
+                    this.videoElement.muted = true;
+                    this.videoElement.style.width = '100%';
+                    this.videoElement.style.height = '100%';
+                    this.videoElement.style.objectFit = 'contain';
+                    this.videoElement.style.background = '#000';
+                    this.videoElement.style.display = 'none';
+
+                    // Canvas 컨테이너에 추가
+                    const container = this.canvas.parentElement;
+                    container.appendChild(this.videoElement);
+                }
+
+                this.videoElement.srcObject = event.streams[0];
+                this.videoElement.play().catch(e => console.error('Video play error:', e));
+
+                // 오버레이 숨김
+                if (this.canvasOverlay.classList.contains('active')) {
+                    this.canvasOverlay.classList.remove('active');
+                }
+
+                // FPS 모니터링 시작
+                this.startWebRTCStatsMonitor();
+            }
+        };
+
+        // DataChannel 수신 (Host가 생성한 경우)
+        this.peerConnection.ondatachannel = (event) => {
+            this.dataChannel = event.channel;
+            console.log('[WebRTC] DataChannel received:', event.channel.label);
+
+            this.dataChannel.onopen = () => {
+                console.log('[WebRTC] DataChannel opened');
+            };
+
+            this.dataChannel.onclose = () => {
+                console.log('[WebRTC] DataChannel closed');
+            };
+        };
+
+        // Transceiver 추가 (Video/Audio 수신 전용)
+        this.peerConnection.addTransceiver('video', { direction: 'recvonly' });
+        this.peerConnection.addTransceiver('audio', { direction: 'recvonly' });
+    }
+
+    async handleWebRTCOffer(message) {
+        if (!this.peerConnection) {
+            console.warn('[WebRTC] No peer connection for offer');
+            return;
+        }
+
+        try {
+            const offer = {
+                type: 'offer',
+                sdp: message.sdp
+            };
+
+            console.log('[WebRTC] Received offer, creating answer...');
+            await this.peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+            console.log('[WebRTC] Remote description set');
+
+            // 대기 중인 ICE 후보 처리
+            await this.processPendingCandidates();
+
+            const answer = await this.peerConnection.createAnswer();
+            await this.peerConnection.setLocalDescription(answer);
+
+            this.ws.send(JSON.stringify({
+                type: 'webrtc-answer',
+                sdp: answer.sdp
+            }));
+            console.log('[WebRTC] Answer sent');
+        } catch (err) {
+            console.error('[WebRTC] Error handling offer:', err);
+        }
+    }
+
+    async handleWebRTCIceCandidate(message) {
+        if (!this.peerConnection) {
+            // 아직 PeerConnection이 없으면 대기열에 추가
+            this.pendingIceCandidates.push(message);
+            console.log('[WebRTC] ICE candidate queued');
+            return;
+        }
+
+        if (!this.peerConnection.remoteDescription) {
+            // RemoteDescription이 없으면 대기열에 추가
+            this.pendingIceCandidates.push(message);
+            console.log('[WebRTC] ICE candidate queued (no remote description)');
+            return;
+        }
+
+        try {
+            const candidate = new RTCIceCandidate({
+                candidate: message.candidate,
+                sdpMid: message.sdpMid,
+                sdpMLineIndex: message.sdpMLineIndex
+            });
+            await this.peerConnection.addIceCandidate(candidate);
+            console.log('[WebRTC] ICE candidate added');
+        } catch (err) {
+            console.error('[WebRTC] Error adding ICE candidate:', err);
+        }
+    }
+
+    async processPendingCandidates() {
+        console.log('[WebRTC] Processing', this.pendingIceCandidates.length, 'pending ICE candidates');
+
+        for (const msg of this.pendingIceCandidates) {
+            try {
+                const candidate = new RTCIceCandidate({
+                    candidate: msg.candidate,
+                    sdpMid: msg.sdpMid,
+                    sdpMLineIndex: msg.sdpMLineIndex
+                });
+                await this.peerConnection.addIceCandidate(candidate);
+            } catch (err) {
+                console.error('[WebRTC] Error adding pending ICE candidate:', err);
+            }
+        }
+
+        this.pendingIceCandidates = [];
+    }
+
+    startWebRTCStatsMonitor() {
+        if (this.statsInterval) return;
+
+        this.statsInterval = setInterval(async () => {
+            if (!this.peerConnection) return;
+
+            try {
+                const stats = await this.peerConnection.getStats();
+                stats.forEach(report => {
+                    if (report.type === 'inbound-rtp' && report.kind === 'video') {
+                        if (this.lastFramesReceived !== undefined) {
+                            const fps = report.framesReceived - this.lastFramesReceived;
+                            this.fpsDisplay.textContent = fps + ' FPS';
+                        }
+                        this.lastFramesReceived = report.framesReceived;
+                    }
+                });
+            } catch (err) {
+                // Stats 수집 실패 무시
+            }
+        }, 1000);
+    }
+
+    cleanupWebRTC() {
+        if (this.statsInterval) {
+            clearInterval(this.statsInterval);
+            this.statsInterval = null;
+        }
+        if (this.dataChannel) {
+            this.dataChannel.close();
+            this.dataChannel = null;
+        }
+        if (this.peerConnection) {
+            this.peerConnection.close();
+            this.peerConnection = null;
+        }
+        this.webrtcConnected = false;
+        this.pendingIceCandidates = [];
     }
 
     sendText() {

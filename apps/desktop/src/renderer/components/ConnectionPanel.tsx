@@ -162,7 +162,7 @@ function ConnectionPanel({ onConnect, error }: ConnectionPanelProps) {
                             </>
                         ) : (
                             <>
-                                <Icon name="rocket" size={16} />
+                                <Icon name="link" size={16} />
                                 연결하기
                             </>
                         )}

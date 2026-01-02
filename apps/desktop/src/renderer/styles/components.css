@@ -326,6 +326,12 @@
     backdrop-filter: blur(5px);
 }
 
+/* 원격 화면은 항상 불투명 배경 (부모 투명도 무시) */
+.app[data-theme="lunar-space"] .main-panel .remote-viewer,
+.app[data-theme="lunar-space"] .remote-viewer {
+    background: #000 !important;
+}
+
 /* 루나 테마 카드에 글로우 효과 */
 .app[data-theme="lunar-space"] .card {
     border: 1px solid rgba(139, 92, 246, 0.15);

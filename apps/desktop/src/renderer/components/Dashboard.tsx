@@ -166,39 +166,59 @@ function Dashboard({ connectionId, password, onRefreshPassword }: DashboardProps
                 </div>
             </div>
 
-            {/* 모니터 선택 카드 */}
-            {screens.length > 1 && (
+            {/* 디스플레이 정보 카드 (모니터 선택 및 해상도 확인) */}
+            {screens.length > 0 && (
                 <div className="card">
                     <div className="card-header">
                         <h2 className="card-title">
                             <Icon name="monitor" size={18} />
-                            공유할 모니터
+                            {screens.length > 1 ? '공유할 모니터 선택' : '디스플레이 정보'}
                         </h2>
                     </div>
                     <div className="monitor-selector">
-                        <select
-                            className="setting-select"
-                            value={selectedScreen}
-                            onChange={(e) => handleScreenChange(e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '10px 12px',
-                                fontSize: '14px',
+                        {screens.length > 1 ? (
+                            <>
+                                <select
+                                    className="setting-select"
+                                    value={selectedScreen}
+                                    onChange={(e) => handleScreenChange(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        fontSize: '14px',
+                                        background: 'rgba(255,255,255,0.05)',
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        borderRadius: '8px',
+                                        color: 'inherit'
+                                    }}
+                                >
+                                    {screens.map((screen, index) => (
+                                        <option key={screen.id} value={screen.id}>
+                                            모니터 {index + 1}: {screen.name} ({screen.width}×{screen.height})
+                                        </option>
+                                    ))}
+                                </select>
+                                <p style={{ fontSize: '12px', opacity: 0.6, marginTop: '8px' }}>
+                                    💡 듀얼 모니터: 공유할 모니터와 다른 모니터에서 뷰어를 실행하면 거울 효과 없이 테스트할 수 있습니다.
+                                </p>
+                            </>
+                        ) : (
+                            <div className="single-monitor-info" style={{
+                                padding: '12px',
                                 background: 'rgba(255,255,255,0.05)',
-                                border: '1px solid rgba(255,255,255,0.1)',
                                 borderRadius: '8px',
-                                color: 'inherit'
-                            }}
-                        >
-                            {screens.map((screen, index) => (
-                                <option key={screen.id} value={screen.id}>
-                                    모니터 {index + 1}: {screen.name} ({screen.width}×{screen.height})
-                                </option>
-                            ))}
-                        </select>
-                        <p style={{ fontSize: '12px', opacity: 0.6, marginTop: '8px' }}>
-                            💡 듀얼 모니터: 공유할 모니터와 다른 모니터에서 뷰어를 실행하면 거울 효과 없이 테스트할 수 있습니다.
-                        </p>
+                                fontSize: '14px',
+                                color: 'var(--text-primary)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                            }}>
+                                <Icon name="monitor" size={16} />
+                                <span>{screens[0].name}</span>
+                                <span style={{ color: 'var(--text-muted)' }}>|</span>
+                                <span style={{ fontFamily: 'monospace' }}>{screens[0].width} × {screens[0].height}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
