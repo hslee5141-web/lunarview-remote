@@ -1,6 +1,6 @@
 {
     "name": "lunarview-desktop",
-    "version": "1.2.1",
+    "version": "1.3.0",
     "description": "LunarView - Remote Desktop Application",
     "author": "LunarView Team <support@lunarview.com>",
     "main": "dist/main/index.js",
