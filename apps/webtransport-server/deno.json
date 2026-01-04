@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "lib": ["deno.window", "deno.unstable"]
+    },
+    "tasks": {
+        "dev": "deno run --unstable-net --allow-net --allow-read --watch src/main.ts",
+        "test": "deno test --allow-net --allow-read --allow-write --unsafely-ignore-certificate-errors --unstable-net"
+    },
+    "imports": {
+        "std/": "https://deno.land/std@0.208.0/",
+        "@std/assert": "https://deno.land/std@0.208.0/assert/mod.ts",
+        "@std/async/delay": "https://deno.land/std@0.208.0/async/delay.ts"
+    }
+}

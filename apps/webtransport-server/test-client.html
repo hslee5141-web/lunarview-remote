@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebTransport Test Client</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .card h2 {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            color: #a5b4fc;
+        }
+        button {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .status {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            font-family: monospace;
+        }
+        .status.connected { background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; }
+        .status.disconnected { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; }
+        .status.pending { background: rgba(234, 179, 8, 0.2); border: 1px solid #eab308; }
+        #log {
+            background: #0d1117;
+            border-radius: 8px;
+            padding: 1rem;
+            height: 300px;
+            overflow-y: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+        .log-entry { margin-bottom: 0.25rem; }
+        .log-entry.info { color: #58a6ff; }
+        .log-entry.success { color: #3fb950; }
+        .log-entry.error { color: #f85149; }
+        .log-entry.data { color: #d2a8ff; }
+        input {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            color: white;
+            font-size: 1rem;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 WebTransport Test Client</h1>
+
+        <div class="card">
+            <h2>📡 Connection</h2>
+            <div style="background: rgba(234,179,8,0.2); border: 1px solid #eab308; border-radius: 6px; padding: 1rem; margin-bottom: 1rem; font-size: 0.875rem;">
+                <strong>⚠️ Self-Signed Certificate Setup:</strong><br>
+                1. Open Chrome with: <code style="background:#333;padding:0.2rem 0.4rem;border-radius:3px;">chrome --origin-to-force-quic-on=localhost:4433</code><br>
+                2. Or visit <a href="https://localhost:4433" target="_blank" style="color:#60a5fa;">https://localhost:4433</a> first and accept the certificate warning
+            </div>
+            <input type="text" id="serverUrl" value="https://localhost:4433" placeholder="Server URL">
+            <button id="connectBtn" onclick="connect()">Connect</button>
+            <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+            <div id="connectionStatus" class="status disconnected">Disconnected</div>
+        </div>
+
+        <div class="card">
+            <h2>📨 Stream Echo Test</h2>
+            <input type="text" id="streamMsg" value="Hello WebTransport!" placeholder="Message">
+            <button id="streamBtn" onclick="sendStream()" disabled>Send Stream</button>
+        </div>
+
+        <div class="card">
+            <h2>⚡ Datagram Echo Test</h2>
+            <button id="datagramBtn" onclick="sendDatagram()" disabled>Send Datagram</button>
+        </div>
+
+        <div class="card">
+            <h2>📋 Log</h2>
+            <div id="log"></div>
+        </div>
+    </div>
+
+    <script>
+        let transport = null;
+        let datagramWriter = null;
+        let datagramReader = null;
+
+        function log(message, type = 'info') {
+            const logEl = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logEl.appendChild(entry);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function updateStatus(connected) {
+            const statusEl = document.getElementById('connectionStatus');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            const streamBtn = document.getElementById('streamBtn');
+            const datagramBtn = document.getElementById('datagramBtn');
+
+            if (connected) {
+                statusEl.textContent = 'Connected ✅';
+                statusEl.className = 'status connected';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                streamBtn.disabled = false;
+                datagramBtn.disabled = false;
+            } else {
+                statusEl.textContent = 'Disconnected';
+                statusEl.className = 'status disconnected';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                streamBtn.disabled = true;
+                datagramBtn.disabled = true;
+            }
+        }
+
+        async function connect() {
+            const url = document.getElementById('serverUrl').value;
+            log(`Connecting to ${url}...`);
+
+            try {
+                // For self-signed certs, Chrome needs to trust the cert manually
+                // Or use serverCertificateHashes if you have the cert fingerprint
+                transport = new WebTransport(url);
+
+                transport.closed.then(() => {
+                    log('Session closed', 'info');
+                    updateStatus(false);
+                }).catch(err => {
+                    log(`Session closed with error: ${err}`, 'error');
+                    updateStatus(false);
+                });
+
+                await transport.ready;
+                log('Connected successfully!', 'success');
+                updateStatus(true);
+
+                // Setup datagram handlers
+                datagramWriter = transport.datagrams.writable.getWriter();
+                datagramReader = transport.datagrams.readable.getReader();
+                listenForDatagrams();
+
+            } catch (err) {
+                log(`Connection failed: ${err.message}`, 'error');
+                updateStatus(false);
+            }
+        }
+
+        async function disconnect() {
+            if (transport) {
+                transport.close();
+                transport = null;
+                log('Disconnected', 'info');
+                updateStatus(false);
+            }
+        }
+
+        async function sendStream() {
+            if (!transport) return;
+
+            const message = document.getElementById('streamMsg').value;
+            log(`Sending stream: "${message}"`, 'info');
+
+            try {
+                const stream = await transport.createBidirectionalStream();
+                const writer = stream.writable.getWriter();
+                const reader = stream.readable.getReader();
+
+                const data = new TextEncoder().encode(message);
+                await writer.write(data);
+                log(`Sent ${data.length} bytes`, 'info');
+
+                const { value } = await reader.read();
+                if (value) {
+                    const received = new TextDecoder().decode(value);
+                    log(`Received echo: "${received}"`, 'success');
+                }
+
+                writer.close();
+            } catch (err) {
+                log(`Stream error: ${err.message}`, 'error');
+            }
+        }
+
+        async function sendDatagram() {
+            if (!datagramWriter) return;
+
+            const data = new Uint8Array([1, 2, 3, 4, 5]);
+            log(`Sending datagram: [${data.join(', ')}]`, 'info');
+
+            try {
+                await datagramWriter.write(data);
+                log('Datagram sent', 'info');
+            } catch (err) {
+                log(`Datagram error: ${err.message}`, 'error');
+            }
+        }
+
+        async function listenForDatagrams() {
+            if (!datagramReader) return;
+
+            try {
+                while (true) {
+                    const { value, done } = await datagramReader.read();
+                    if (done) break;
+                    log(`Received datagram: [${Array.from(value).join(', ')}]`, 'data');
+                }
+            } catch (err) {
+                log(`Datagram listener error: ${err.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
