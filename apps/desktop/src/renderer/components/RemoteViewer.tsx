@@ -125,28 +125,68 @@ function RemoteViewer({ onDisconnect, isViewer = false }: RemoteViewerProps) {
         const video = videoRef.current;
         if (!video || !isViewer) return;
 
+        // Pointer Lock State
+        const virtualPosRef = useRef<{ x: number, y: number } | null>(null);
+
+        // Click to capture
+        const handleClick = () => {
+            if (document.pointerLockElement !== video) {
+                video.requestPointerLock();
+            }
+        };
+
         const handleMouseMove = (e: MouseEvent) => {
             const rect = video.getBoundingClientRect();
-            mousePosRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            
+            // Calculate Video Dimensions (Letterboxing)
+            const videoRatio = video.videoWidth / video.videoHeight;
+            const elementRatio = rect.width / rect.height;
+
+            let drawWidth = rect.width, drawHeight = rect.height, startX = 0, startY = 0;
+            if (elementRatio > videoRatio) {
+                drawWidth = rect.height * videoRatio;
+                startX = (rect.width - drawWidth) / 2;
+            } else {
+                drawHeight = rect.width / videoRatio;
+                startY = (rect.height - drawHeight) / 2;
+            }
+
+            if (document.pointerLockElement === video) {
+                // Locked Mode: Use movementX/Y (Deltas)
+                if (!virtualPosRef.current) {
+                    virtualPosRef.current = { x: drawWidth / 2, y: drawHeight / 2 }; // Center init
+                }
+                
+                virtualPosRef.current.x += e.movementX;
+                virtualPosRef.current.y += e.movementY;
+
+                // Clamp to screen bounds
+                virtualPosRef.current.x = Math.max(0, Math.min(drawWidth, virtualPosRef.current.x));
+                virtualPosRef.current.y = Math.max(0, Math.min(drawHeight, virtualPosRef.current.y));
+
+                mousePosRef.current = { 
+                    x: virtualPosRef.current.x + startX, 
+                    y: virtualPosRef.current.y + startY 
+                };
+            } else {
+                // Unlocked Mode: Absolute position
+                mousePosRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+                // Sync virtual pos for smooth transition
+                if (mousePosRef.current) {
+                    virtualPosRef.current = { 
+                        x: mousePosRef.current.x - startX, 
+                        y: mousePosRef.current.y - startY 
+                    };
+                }
+            }
 
             if (rafRef.current === null) {
                 rafRef.current = requestAnimationFrame(() => {
                     if (!mousePosRef.current || !video) return;
-                    const rect = video.getBoundingClientRect();
-                    const videoRatio = video.videoWidth / video.videoHeight;
-                    const elementRatio = rect.width / rect.height;
-
-                    let drawWidth = rect.width, drawHeight = rect.height, startX = 0, startY = 0;
-                    if (elementRatio > videoRatio) {
-                        drawWidth = rect.height * videoRatio;
-                        startX = (rect.width - drawWidth) / 2;
-                    } else {
-                        drawHeight = rect.width / videoRatio;
-                        startY = (rect.height - drawHeight) / 2;
-                    }
 
                     let x = Math.max(0, Math.min(1, (mousePosRef.current.x - startX) / drawWidth));
                     let y = Math.max(0, Math.min(1, (mousePosRef.current.y - startY) / drawHeight));
+                    
                     window.electronAPI.sendMouseEvent({ type: 'move', x, y } as any);
                     rafRef.current = null;
                 });
@@ -170,6 +210,7 @@ function RemoteViewer({ onDisconnect, isViewer = false }: RemoteViewerProps) {
             window.electronAPI.sendKeyboardEvent({ type: 'up', key: e.key, keyCode: e.keyCode } as any);
         };
 
+        video.addEventListener('click', handleClick);
         video.addEventListener('mousemove', handleMouseMove);
         video.addEventListener('mousedown', handleMouseDown);
         video.addEventListener('mouseup', handleMouseUp);
@@ -179,6 +220,7 @@ function RemoteViewer({ onDisconnect, isViewer = false }: RemoteViewerProps) {
         video.focus();
 
         return () => {
+            video.removeEventListener('click', handleClick);
             video.removeEventListener('mousemove', handleMouseMove);
             video.removeEventListener('mousedown', handleMouseDown);
             video.removeEventListener('mouseup', handleMouseUp);
@@ -351,7 +393,7 @@ function RemoteViewer({ onDisconnect, isViewer = false }: RemoteViewerProps) {
                     ref={videoRef}
                     className={`remote-canvas ${isViewer ? 'viewer-mode' : ''}`}
                     autoPlay playsInline muted tabIndex={0}
-                    style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: '#000' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: '#000', cursor: isViewer ? 'none' : 'default' }}
                 />
             </div>
 
